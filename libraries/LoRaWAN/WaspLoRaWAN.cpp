@@ -1,6 +1,6 @@
 /*
  *  Library for managing managing the LoRaWAN module
- * 
+ *
  *  Copyright (C) 2017 Libelium Comunicaciones Distribuidas S.L.
  *  http://www.libelium.com
  *
@@ -8,12 +8,12 @@
  *  it under the terms of the GNU Lesser General Public License as published by
  *  the Free Software Foundation, either version 2.1 of the License, or
  *  (at your option) any later version.
-   
+
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU Lesser General Public License for more details.
-  
+
  *  You should have received a copy of the GNU Lesser General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
@@ -121,11 +121,11 @@
  const char command_88[]	PROGMEM	= 	"mac get rxdelay2\r\n";
  const char command_89[]	PROGMEM	= 	"mac get rx2 %s\r\n";
 
- 
 
-const char* const table_LoRaWAN_COMMANDS[] PROGMEM= 	  
-{   
-	command_00, 
+
+const char* const table_LoRaWAN_COMMANDS[] PROGMEM=
+{
+	command_00,
 	command_01,
 	command_02,
 	command_03,
@@ -170,7 +170,7 @@ const char* const table_LoRaWAN_COMMANDS[] PROGMEM=
 	command_42,
 	command_43,
 	command_44,
-	command_45, 
+	command_45,
 	command_46,
 	command_47,
 	command_48,
@@ -192,7 +192,7 @@ const char* const table_LoRaWAN_COMMANDS[] PROGMEM=
 	command_64,
 	command_65,
 	command_66,
-	command_67,     
+	command_67,
 	command_68,
 	command_69,
 	command_70,
@@ -205,9 +205,9 @@ const char* const table_LoRaWAN_COMMANDS[] PROGMEM=
 	command_77,
 	command_78,
 	command_79,
-	command_80,	
+	command_80,
 	command_81,
-	command_82,	
+	command_82,
 	command_83,
 	command_84,
 	command_85,
@@ -243,9 +243,9 @@ const char* const table_LoRaWAN_COMMANDS[] PROGMEM=
  const char answer_20[]	PROGMEM	=	"RN2903";
 
 
-const char* const table_LoRaWAN_ANSWERS[] PROGMEM= 	  
-{   
-	answer_00, 
+const char* const table_LoRaWAN_ANSWERS[] PROGMEM=
+{
+	answer_00,
 	answer_01,
 	answer_02,
 	answer_03,
@@ -280,13 +280,13 @@ const char* const table_LoRaWAN_ANSWERS[] PROGMEM=
 
 /*!
  * @brief	This function powers on the module
- * 
+ *
  * @param 	uint8_t	socket: socket to be used: SOCKET0 or SOCKET1
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::ON(uint8_t socket)
 {
@@ -296,14 +296,14 @@ uint8_t WaspLoRaWAN::ON(uint8_t socket)
 
 	OFF(socket);
 	delay(200);
-	
+
 	// select multiplexer
     if (_uart == SOCKET0) 	Utils.setMuxSocket0();
     if (_uart == SOCKET1) 	Utils.setMuxSocket1();
-	
+
 	// Open UART
 	beginUART();
-	
+
     // power on the socket
     PWR.powerSocket(_uart, HIGH);
 
@@ -314,10 +314,10 @@ uint8_t WaspLoRaWAN::ON(uint8_t socket)
 
 /*!
  * @brief	This function powers down the module
- * 
+ *
  * @param 	uint8_t	socket: socket to be used: SOCKET0 or SOCKET1
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
  */
 uint8_t WaspLoRaWAN::OFF(uint8_t socket)
@@ -325,50 +325,50 @@ uint8_t WaspLoRaWAN::OFF(uint8_t socket)
 	_uart = socket;
 
 	// close uart
-	closeUART();	
-	
-	// unselect multiplexer 
+	closeUART();
+
+	// unselect multiplexer
     if (_uart == SOCKET0) Utils.setMuxUSB();
     if (_uart == SOCKET1) Utils.muxOFF1();
 
 	// switch module OFF
 	PWR.powerSocket(_uart, LOW);
 
-	return LORAWAN_ANSWER_OK;	
+	return LORAWAN_ANSWER_OK;
 }
- 
- 
- 
+
+
+
 
 /*!
  * @brief	This function resets and restart the stored internal configurations
  * 			will be loaded upon reboot and saves modules version.
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'2' if no answer  
- * 
+ * 	@arg	'2' if no answer
+ *
  */
 uint8_t WaspLoRaWAN::reset()
 {
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "sys reset" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[0])));
 	// create "RN2483" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[5])));
 	// create "RN2903" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[20])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,600);
-	
+
 	if (status == 1)
 	{
 		_version = RN2483_MODULE;
@@ -389,13 +389,13 @@ uint8_t WaspLoRaWAN::reset()
 
 /*!
  * @brief	This function resets the module's configuration data and user
- * 			EEPROM to factory default values, restarts the module and saves 
+ * 			EEPROM to factory default values, restarts the module and saves
  * 			modules version.
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'2' if no answer  
- * 
+ * 	@arg	'2' if no answer
+ *
  */
 uint8_t WaspLoRaWAN::factoryReset()
 {
@@ -403,12 +403,12 @@ uint8_t WaspLoRaWAN::factoryReset()
 	char ans1[15];
 	char ans2[15];
 	char carr[5];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
 	memset(carr,0x00,sizeof(carr));
-	
+
 	// create "sys factoryRESET" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[1])));
 	// create "RN2483" answer
@@ -417,10 +417,10 @@ uint8_t WaspLoRaWAN::factoryReset()
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[20])));
 	// create "\r\n" answer
 	sprintf_P(carr,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,5000);
-	
+
 	if (status == 1)
 	{
 		waitFor(carr,1000);
@@ -443,38 +443,38 @@ uint8_t WaspLoRaWAN::factoryReset()
 
 /*!
  * @brief	This function gets hardware EUI from the module
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getEUI()
 {
 	uint8_t status;
 	char ans1[5];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "sys get hweui" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[2])));
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 0)
 	{
 		return LORAWAN_NO_ANSWER;
 	}
 	else if (status == 1)
-	{		
+	{
 		char* pch = strtok((char*)_buffer,ans1);
 		if (pch != NULL)
 		{
@@ -496,38 +496,38 @@ uint8_t WaspLoRaWAN::getEUI()
 /*!
  * @brief	This function gets hardware EUI from the module nad stores
  * 			last 4 byte as devAddres
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getAddr()
 {
 	uint8_t status;
 	char ans1[5];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "sys get hweui" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[2])));
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 0)
 	{
 		return LORAWAN_NO_ANSWER;
 	}
 	else if (status == 1)
-	{		
+	{
 		char* pch = strtok((char*)_buffer,ans1);
 		if (pch != NULL)
 		{
@@ -550,38 +550,38 @@ uint8_t WaspLoRaWAN::getAddr()
 /*!
  * @brief	This functions gets supply power from the module
  *
- * @return	
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getSupplyPower()
 {
 	uint8_t status;
 	char ans1[5];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "sys get vdd" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[3])));
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
-	{	
+	{
 		_supplyPower = parseIntValue();
 		if (_supplyPower == 0)
-		{			
+		{
 			return LORAWAN_ANSWER_ERROR;
-		}		
+		}
 
 		return LORAWAN_ANSWER_OK;
 	}
@@ -589,7 +589,7 @@ uint8_t WaspLoRaWAN::getSupplyPower()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -597,26 +597,26 @@ uint8_t WaspLoRaWAN::getSupplyPower()
 
 
 /*!
- * @brief	Checks if module is ready to use and saves which kind of 
+ * @brief	Checks if module is ready to use and saves which kind of
  * 			module has been plugged to Waspmote, either RN2483 or RN2903
- * @return	
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
- * 
- */ 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
+ *
+ */
 uint8_t WaspLoRaWAN::check()
-{	
+{
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
 	char ans3[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
 	memset(ans3,0x00,sizeof(ans3));
-	
+
 	// create "sys get ver" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[68])));
 	// create "RN2483" command
@@ -625,10 +625,10 @@ uint8_t WaspLoRaWAN::check()
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[20])));
 	// create "invalid_param" answer
 	sprintf_P(ans3,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,ans3,1000);
-	
+
 	if (status == 1)
 	{
 		_version = RN2483_MODULE;
@@ -643,7 +643,7 @@ uint8_t WaspLoRaWAN::check()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -658,15 +658,15 @@ uint8_t WaspLoRaWAN::check()
 
 
 
-/*! 
+/*!
  * @brief	This function is used to reset LoRaWAN configuration and set working band.
- * 
+ *
  * @param	char* band: working LoRaWAN band: "433", EU or US
- * 
- * @return		
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  *  @arg	'7' if input parameter error
  */
 uint8_t WaspLoRaWAN::resetMacConfig(char* band)
@@ -674,26 +674,26 @@ uint8_t WaspLoRaWAN::resetMacConfig(char* band)
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	if ((strcmp(band, "433")) && (strcmp(band, "868")) && (strcmp(band, "900")))
 	{
 		return LORAWAN_INPUT_ERROR;
 	}
-	
+
 	if (_version == RN2903_MODULE)
 	{
-	
+
 		// create "mac reset" command
 		sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[80])));
 		// create "ok" answer
 		sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 		// create "invalid_param" answer
 		sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-		
+
 		//send command and wait for ans
 		status = sendCommand(_command,ans1,ans2,1000);
 
@@ -709,16 +709,16 @@ uint8_t WaspLoRaWAN::resetMacConfig(char* band)
 		{
 			return LORAWAN_NO_ANSWER;
 		}
-	
+
 	}
-	
+
 	// create "mac reset" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[4])), band);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,1000);
 
@@ -737,78 +737,78 @@ uint8_t WaspLoRaWAN::resetMacConfig(char* band)
 }
 
 
-/*! 
+/*!
  * @brief	This function gets hardware EUI and sets MAC devEUI
- * 
- * @return		 
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::setDeviceEUI()
 {
 	uint8_t error = getEUI();
-	
+
 	if (error != 0)
 	{
 		return error;
-	}	
-	
+	}
+
 	return setDeviceEUI(_eui);
 }
 
 
-/*! 
+/*!
  * @brief	This function sets  MAC devEUI
- * 
+ *
  * @param	char* EUI: EUI to be set
- * 
+ *
  * @remarks	EUI is a sequence of digit representing the value of devEUI
- * 			expressed in hexadecimal value (i.e. EUI = 0004A30B001A836D 
- * 			– address is composed by the following byte stream: 
- * 			0x00, 0x04, 0xA3, 0x0B, 0x00, 0x1A, 0x83, 0x6D - 16 digit 
+ * 			expressed in hexadecimal value (i.e. EUI = 0004A30B001A836D
+ * 			– address is composed by the following byte stream:
+ * 			0x00, 0x04, 0xA3, 0x0B, 0x00, 0x1A, 0x83, 0x6D - 16 digit
  * 			converted in 8 bytes).
- * 
- * @return		 
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  *  @arg	'7' if input parameter error
  */
 uint8_t WaspLoRaWAN::setDeviceEUI(char* eui)
 {
-	uint8_t status;	
+	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// check eui length
 	if (strlen(eui)!=16) return LORAWAN_INPUT_ERROR;
-	
+
 	// check if eui is a hexadecimal string
 	for (uint8_t i=0;i<16;i++)
 	{
-		if (((eui[i] < '0') || (eui[i] > '9')) && 
-			((eui[i] < 'A') || (eui[i] > 'F')) && 
+		if (((eui[i] < '0') || (eui[i] > '9')) &&
+			((eui[i] < 'A') || (eui[i] > 'F')) &&
 			((eui[i] < 'a') || (eui[i] > 'f')))
 		{
 			return LORAWAN_INPUT_ERROR;
 		}
 	}
-	
+
 	// create "mac set deveui" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[12])), eui);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,100);
-	
+
 	if (status == 1)
 	{
 		memset(_devEUI,0x00,sizeof(_devEUI));
@@ -828,10 +828,10 @@ uint8_t WaspLoRaWAN::setDeviceEUI(char* eui)
 
 /*!
  * @brief	This function gets the MAC device EUI from module
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getDeviceEUI()
@@ -839,27 +839,27 @@ uint8_t WaspLoRaWAN::getDeviceEUI()
 	uint8_t status;
 	char ans1[5];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "mac get deveui" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[25])));
 	// create "invalid_param" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,300);
-	
+
 	if (status == 0)
 	{
 		return LORAWAN_NO_ANSWER;
 	}
 	else if (status == 1)
-	{		
+	{
 		char* pch = strtok((char*)_buffer,ans1);
 		if (pch != NULL)
 		{
@@ -880,12 +880,12 @@ uint8_t WaspLoRaWAN::getDeviceEUI()
 
 
 
-/*! 
+/*!
  * @brief	This function gets hardware EUI and sets MAC devAddress
- * @return		 
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::setDeviceAddr()
 {
@@ -895,53 +895,53 @@ uint8_t WaspLoRaWAN::setDeviceAddr()
 
 
 
-/*! 
+/*!
  * @brief	This function sets  MAC devAddress
- * 
+ *
  * @param	char* addr: addr to be set
- * 
+ *
  * @remarks	addr is a sequence of digit representing the value of addres
  * 			expressed in hexadecimal value (i.e. addr = 001A836D – address
- * 			is composed by the following byte stream: 0x00, 0x1A, 0x83, 0x6D 
+ * 			is composed by the following byte stream: 0x00, 0x1A, 0x83, 0x6D
  * 			– 8 digit converted in 4 bytes).
- * 
- * @return		 
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  *  @arg	'7' if input parameter error
  */
 uint8_t WaspLoRaWAN::setDeviceAddr(char* addr)
 {
-	uint8_t status;	
+	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// check addr length
 	if (strlen(addr)!=8) return LORAWAN_INPUT_ERROR;
-	
+
 	// check if addr is a hexadecimal string
 	for (uint8_t i=0;i<8;i++)
 	{
-		if (((addr[i] < '0') || (addr[i] > '9')) && 
-			((addr[i] < 'A') || (addr[i] > 'F')) && 
+		if (((addr[i] < '0') || (addr[i] > '9')) &&
+			((addr[i] < 'A') || (addr[i] > 'F')) &&
 			((addr[i] < 'a') || (addr[i] > 'f')))
 		{
 			return LORAWAN_INPUT_ERROR;
 		}
 	}
-	
+
 	// create "mac set devaddr" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[11])), addr);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,100);
 
@@ -965,10 +965,10 @@ uint8_t WaspLoRaWAN::setDeviceAddr(char* addr)
 
 /*!
  * @brief	This function gets the MAC device Address from module
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getDeviceAddr()
@@ -976,11 +976,11 @@ uint8_t WaspLoRaWAN::getDeviceAddr()
 	uint8_t status;
 	char ans1[5];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "mac get devaddr" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[24])));
 	// create "\r\n" answer
@@ -990,13 +990,13 @@ uint8_t WaspLoRaWAN::getDeviceAddr()
 
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,300);
-	
+
 	if (status == 0)
 	{
 		return LORAWAN_NO_ANSWER;
 	}
 	else if (status == 1)
-	{		
+	{
 		char* pch = strtok((char*)_buffer,ans1);
 		if (pch != NULL)
 		{
@@ -1017,19 +1017,19 @@ uint8_t WaspLoRaWAN::getDeviceAddr()
 
 
 
-/*! 
+/*!
  * @brief	This function sets  MAC Network Session Key
- * 
+ *
  * @param	char* key: key to be set
- * 
+ *
  * @remarks	key is a sequence of digit representing the value of NwkSKey
  * 			expressed in hexadecimal value (i.e. key = 000102030405060708091011121314
  *			32 digit converted in 16 bytes).
- * 
- * @return		 
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  *  @arg	'7' if input parameter error
  */
 uint8_t WaspLoRaWAN::setNwkSessionKey(char* key)
@@ -1037,32 +1037,32 @@ uint8_t WaspLoRaWAN::setNwkSessionKey(char* key)
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// check key length
 	if (strlen(key)!=32) return LORAWAN_INPUT_ERROR;
-	
+
 	// check if key is a hexadecimal string
 	for (uint8_t i=0;i<32;i++)
 	{
-		if (((key[i] < '0') || (key[i] > '9')) && 
-			((key[i] < 'A') || (key[i] > 'F')) && 
+		if (((key[i] < '0') || (key[i] > '9')) &&
+			((key[i] < 'A') || (key[i] > 'F')) &&
 			((key[i] < 'a') || (key[i] > 'f')))
 		{
 			return LORAWAN_INPUT_ERROR;
 		}
 	}
-	
+
 	// create "mac set nwkskey" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[14])), key);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,100);
 
@@ -1084,19 +1084,19 @@ uint8_t WaspLoRaWAN::setNwkSessionKey(char* key)
 
 
 
-/*! 
+/*!
  * @brief	This function sets  MAC appEUI
- * 
+ *
  * @param	char* EUI: EUI to be set
- * 
+ *
  * @remarks	EUI is a sequence of digit representing the value of appEUI
  * 			expressed in hexadecimal value (i.e.: EUI = 0001020304050607
  *			16 digit converted in 8 bytes).
- * 
- * @return		 
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  *  @arg	'7' if input parameter error
  */
 uint8_t WaspLoRaWAN::setAppEUI(char* eui)
@@ -1104,32 +1104,32 @@ uint8_t WaspLoRaWAN::setAppEUI(char* eui)
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// check eui length
 	if (strlen(eui)!=16) return LORAWAN_INPUT_ERROR;
-	
+
 	//check if eui is a hexadecimal string
 	for (uint8_t i=0;i<16;i++)
 	{
-		if (((eui[i] < '0') || (eui[i] > '9')) && 
-			((eui[i] < 'A') || (eui[i] > 'F')) && 
+		if (((eui[i] < '0') || (eui[i] > '9')) &&
+			((eui[i] < 'A') || (eui[i] > 'F')) &&
 			((eui[i] < 'a') || (eui[i] > 'f')))
 		{
 			return LORAWAN_INPUT_ERROR;
 		}
 	}
-	
+
 	// create "mac set appeui" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[13])), eui);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,100);
 
@@ -1153,10 +1153,10 @@ uint8_t WaspLoRaWAN::setAppEUI(char* eui)
 
 /*!
  * @brief	This function gets the MAC AppEUI from module
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getAppEUI()
@@ -1164,27 +1164,27 @@ uint8_t WaspLoRaWAN::getAppEUI()
 	uint8_t status;
 	char ans1[5];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "mac get appeui" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[26])));
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,300);
-	
+
 	if (status == 0)
 	{
 		return LORAWAN_NO_ANSWER;
 	}
 	else if (status == 1)
-	{		
+	{
 		char* pch = strtok((char*)_buffer,ans1);
 		if (pch != NULL)
 		{
@@ -1204,52 +1204,52 @@ uint8_t WaspLoRaWAN::getAppEUI()
 }
 
 
-/*! 
+/*!
  * @brief	This function sets  MAC App Key
- * 
+ *
  * @param	char* key: key to be set
- * 
+ *
  * @remarks	key is a sequence of digit representing the value of AppKey
  * 			expressed in hexadecimal value (i.e.: key = 000102030405060708091011121314
  *			32 digit converted in 16 bytes).
- * 
- * @return		 
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  *  @arg	'7' if input parameter error
  */
 uint8_t WaspLoRaWAN::setAppKey(char* key)
 {
-	uint8_t status;	
+	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// check key length
 	if (strlen(key)!=32) return LORAWAN_INPUT_ERROR;
-	
+
 	//check if key is a hexadecimal string
 	for (uint8_t i=0;i<32;i++)
 	{
-		if (((key[i] < '0') || (key[i] > '9')) && 
-			((key[i] < 'A') || (key[i] > 'F')) && 
+		if (((key[i] < '0') || (key[i] > '9')) &&
+			((key[i] < 'A') || (key[i] > 'F')) &&
 			((key[i] < 'a') || (key[i] > 'f')))
 		{
 			return LORAWAN_INPUT_ERROR;
 		}
 	}
-	
+
 	// create "mac set appkey" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[16])), key);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,100);
 
@@ -1272,19 +1272,19 @@ uint8_t WaspLoRaWAN::setAppKey(char* key)
 
 
 
-/*! 
+/*!
  * @brief	This function sets  MAC App Session Key
- * 
+ *
  * @param	char* key: key to be set
- * 
+ *
  * @remarks	key is a sequence of digit representing the value of AppSKey
  * 			expressed in hexadecimal value (i.e.: key = 000102030405060708091011121314
  *			32 digit converted in 16 bytes).
- * 
- * @return		 
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  *  @arg	'7' if input parameter error
  */
 uint8_t WaspLoRaWAN::setAppSessionKey(char* key)
@@ -1292,14 +1292,14 @@ uint8_t WaspLoRaWAN::setAppSessionKey(char* key)
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// check key length
 	if (strlen(key)!=32) return LORAWAN_INPUT_ERROR;
-	
+
 	// check if key is a hexadecimal string
 	for (uint8_t i=0;i<32;i++)
 	{
@@ -1310,14 +1310,14 @@ uint8_t WaspLoRaWAN::setAppSessionKey(char* key)
 			return LORAWAN_INPUT_ERROR;
 		}
 	}
-	
+
 	// create "mac set appskey" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[15])), key);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,100);
 
@@ -1341,71 +1341,71 @@ uint8_t WaspLoRaWAN::setAppSessionKey(char* key)
 
 
 /*!
- * @brief	This function is used to configure the LoRaWAN RF power level 
- * 
+ * @brief	This function is used to configure the LoRaWAN RF power level
+ *
  * @param	uint8_t index: power level to be set [0..5] for 433 MHz,
  * 			[1..5] for EU and [5..10] for US
- * 	
+ *
  *  @arg	0 -> 20 dBm (if supported)
  * 	@arg	1 -> 14 dBm
  * 	@arg	2 -> 11 dBm
  * 	@arg	3 -> 8 dBm
  * 	@arg	4 -> 5 dBm
  * 	@arg	5 -> 2 dBm
- * 
- * 
- * @return		
+ *
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  * 	@arg	'7' if input parameter error
- * 	@arg	'8' if unrecognized module 
+ * 	@arg	'8' if unrecognized module
  */
 uint8_t WaspLoRaWAN::setPower(uint8_t index)
 {
-	uint8_t status;	
+	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	switch (_version)
 	{
 		case RN2483_MODULE:
 				getBand();
-				
+
 				switch (atol(_band))
 				{
 					case 868:
 							if ((index > 5) || (index < 1)) return LORAWAN_INPUT_ERROR;
 							else break;
-							
+
 					case 433:
-							if (index > 5) return LORAWAN_INPUT_ERROR;	
+							if (index > 5) return LORAWAN_INPUT_ERROR;
 							else break;
-							
+
 					default:
-							return LORAWAN_VERSION_ERROR;		
+							return LORAWAN_VERSION_ERROR;
 				}
 				break;
-				
+
 		case RN2903_MODULE:
-				if ( index > 10 || index < 5 || index == 6) return LORAWAN_INPUT_ERROR;		
+				if ( index > 10 || index < 5 || index == 6) return LORAWAN_INPUT_ERROR;
 				else break;
-				
+
 		default:
-				return LORAWAN_VERSION_ERROR;			
+				return LORAWAN_VERSION_ERROR;
 	}
-	
+
 	// create "mac set pwrindx" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[17])), index);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,100);
 
@@ -1414,31 +1414,31 @@ uint8_t WaspLoRaWAN::setPower(uint8_t index)
 		_powerIndex = index;
 		return LORAWAN_ANSWER_OK;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
 }
 
 
-/*! 
+/*!
  * @brief	This function is used to read the power index from module
- * 
- * @return		
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getPower()
 {
-	uint8_t status;	
+	uint8_t status;
 	char ans1[5];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "mac get pwrindx" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[29])));
 	// create "\r\n" answer
@@ -1458,7 +1458,7 @@ uint8_t WaspLoRaWAN::getPower()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -1467,10 +1467,10 @@ uint8_t WaspLoRaWAN::getPower()
 
 
 
-/*! 
+/*!
  * @brief	This function is used to configure the LoRaWAN RF data rate
- * 
- * @param	uint8_t index: data rate to be set [0..7] (RN2483)	
+ *
+ * @param	uint8_t index: data rate to be set [0..7] (RN2483)
  * 	@arg	0 -> Lora: SF 12 / 125 kHz		Bit/s: 250
  * 	@arg	1 -> Lora: SF 11 / 125 kHz		Bit/s: 440
  * 	@arg	2 -> Lora: SF 10 / 125 kHz		Bit/s: 980
@@ -1479,52 +1479,52 @@ uint8_t WaspLoRaWAN::getPower()
  * 	@arg	5 -> Lora: SF 7 / 125 kHz		Bit/s: 5470
  * 	@arg	6 -> Lora: SF 7 / 250 kHz		Bit/s: 11000
  * 	@arg	7 -> 	FSK: 50kbps
- * 
- * 			uint8_t index: data rate to be set [0..4] (RN2903)	
+ *
+ * 			uint8_t index: data rate to be set [0..4] (RN2903)
  * 	@arg	0 -> Lora: SF 10 / 125 kHz		Bit/s: 980
  * 	@arg	1 -> Lora: SF 9 / 125 kHz		Bit/s: 1760
  * 	@arg	2 -> Lora: SF 8 / 125 kHz		Bit/s: 3125
  * 	@arg	3 -> Lora: SF 7 / 125 kHz		Bit/s: 5470
  * 	@arg	4 -> Lora: SF 8 / 500 kHz		Bit/s: 12500
- * 
- * @return		
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  * 	@arg	'7' if input parameter error
- * 	@arg	'8' if unrecognized module 
+ * 	@arg	'8' if unrecognized module
  */
 uint8_t WaspLoRaWAN::setDataRate(uint8_t datarate)
 {
-	uint8_t status;	
+	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	switch (_version)
 	{
 		case RN2483_MODULE:
 				if (datarate > 7) return LORAWAN_INPUT_ERROR;
 				break;
-				
+
 		case RN2903_MODULE:
 				if (datarate > 4) return LORAWAN_INPUT_ERROR;
 				break;
-				
+
 		default:
-				return LORAWAN_VERSION_ERROR;			
+				return LORAWAN_VERSION_ERROR;
 	}
-	
+
 	// create "mac set dr" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[18])), datarate);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,100);
 
@@ -1545,31 +1545,31 @@ uint8_t WaspLoRaWAN::setDataRate(uint8_t datarate)
 
 
 
-/*! 
+/*!
  * @brief	This function is used to read the data rate from module
- * 
- * @return		
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getDataRate()
 {
-	uint8_t status;	
+	uint8_t status;
 	char ans1[5];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "mac get dr" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[27])));
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,100);
 
@@ -1582,7 +1582,7 @@ uint8_t WaspLoRaWAN::getDataRate()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -1590,34 +1590,34 @@ uint8_t WaspLoRaWAN::getDataRate()
 
 
 
-/*! 
+/*!
  * @brief	This function saves config set into module's EEPROM
- * 
- * @return		 
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::saveConfig()
 {
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "mac save" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[8])));
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,4000);
-	
+
 	if (status == 1)
 	{
 		status = LoRaWAN.getUpCounter();
@@ -1645,13 +1645,13 @@ uint8_t WaspLoRaWAN::saveConfig()
 }
 
 
-/*! 
+/*!
  * @brief	This function joins module to a network
- * 
- * @return		 
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  * 	@arg	'3' if keys were not initiated
  */
 uint8_t WaspLoRaWAN::joinABP()
@@ -1660,12 +1660,12 @@ uint8_t WaspLoRaWAN::joinABP()
 	char ans1[15];
 	char ans2[15];
 	char ans3[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
 	memset(ans3,0x00,sizeof(ans3));
-	
+
 	// create "mac join abp" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[7])));
 	// create "ok" answer
@@ -1674,7 +1674,7 @@ uint8_t WaspLoRaWAN::joinABP()
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
 	// create "keys_not_init" answer
 	sprintf_P(ans3,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[17])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,ans3,500);
 
@@ -1683,7 +1683,7 @@ uint8_t WaspLoRaWAN::joinABP()
 		memset(ans1,0x00,sizeof(ans1));
 		// create "accepted" answer
 		sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[6])));
-		
+
 		//wait for response
 		if (waitFor(ans1,800) == 1)
 		{
@@ -1691,7 +1691,7 @@ uint8_t WaspLoRaWAN::joinABP()
 			setDownCounter(_downCounter);
 			return LORAWAN_ANSWER_OK;
 		}
-		else 
+		else
 		{
 			return LORAWAN_ANSWER_ERROR;
 		}
@@ -1704,20 +1704,20 @@ uint8_t WaspLoRaWAN::joinABP()
 	{
 		return LORAWAN_INIT_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
 }
 
 
-/*! 
+/*!
  * @brief	This function joins module to a network
- * 
- * @return		 
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  *	@arg	'3' if keys were not initiated
  */
 uint8_t WaspLoRaWAN::joinOTAA()
@@ -1729,34 +1729,34 @@ uint8_t WaspLoRaWAN::joinOTAA()
 	uint8_t dev_addr[] = {0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x00};
 	uint8_t nwk_s_key[] = {0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x00};
 	uint8_t app_s_key[] = {0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x00};
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
 	memset(ans3,0x00,sizeof(ans3));
-	
+
 	//initialize devAddr so field is not empty
 	status = setDeviceAddr((char*)dev_addr);
 	if ( status != 0)
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	
+
 	//initialize NwkSKey so field is not empty
 	status = setNwkSessionKey((char*)nwk_s_key);
 	if ( status != 0)
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	
+
 	//initialize AppSKey so field is not empty
 	status = setAppSessionKey((char*)app_s_key);
 	if ( status != 0)
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	
-		
+
+
 	// try to join via OTAA
 	int retries = 3;
 	do
@@ -1769,7 +1769,7 @@ uint8_t WaspLoRaWAN::joinOTAA()
 		sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
 		// create "keys_not_init" answer
 		sprintf_P(ans3,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[17])));
-		
+
 		//send command and wait for ans
 		status = sendCommand(_command,ans1,ans2,ans3,1000);
 
@@ -1781,7 +1781,7 @@ uint8_t WaspLoRaWAN::joinOTAA()
 			// create "denied" answer
 			memset(ans2,0x00,sizeof(ans2));
 			sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[19])));
-			
+
 			//wait for response
 			if (waitFor(ans1,ans2,20000) == 1)
 			{
@@ -1790,23 +1790,23 @@ uint8_t WaspLoRaWAN::joinOTAA()
 				{
 					return LORAWAN_ANSWER_OK;
 				}
-				else 
+				else
 				{
 					return LORAWAN_ANSWER_ERROR;
 				}
 			}
-			else 
+			else
 			{
 				// continue with next attempt
 				//return LORAWAN_ANSWER_ERROR;
 			}
-		}	
-		
-		retries--;		
-		
+		}
+
+		retries--;
+
 	} while (retries > 0);
-	
-	
+
+
 	if (status == 1)
 	{
 		return LORAWAN_ANSWER_ERROR;
@@ -1819,30 +1819,30 @@ uint8_t WaspLoRaWAN::joinOTAA()
 	{
 		return LORAWAN_INIT_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
-	}	
+	}
 }
 
 
 /*!
- * 
+ *
  * @brief	This function sends a LoRaWAN packet and waits for ACK
- * 	
+ *
  * @param 	char* data:	data to be sent
  * 			uint8_t port: port number to send data
- * 
+ *
  * @remarks	data is a sequence of digit representing the value of byte stream
- * 			expressed in hexadecimal value (i.e.: payload =12A435 – the payload 
+ * 			expressed in hexadecimal value (i.e.: payload =12A435 – the payload
  * 			is composed by the following byte stream: 0x12, 0xA4, 0x35 – 6 digit
  * 			converted in 3 bytes). The maximum length of frame is 584 digit (292 Bytes).
  * 			User can check _datareceived to know if a downlink was performed
- * 	
- * @return		 
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  * 	@arg	'4' if data length error
  * 	@arg	'5' if error when sending data
  * 	@arg	'6' if module hasn't joined to a network
@@ -1856,30 +1856,30 @@ uint8_t WaspLoRaWAN::sendConfirmed(uint8_t port, char* payload)
 	char ans3[20];
 	char ans4[20];
 	char carr[5];
-	
+
 	// clear data received flag
 	_dataReceived = false;
-	
+
 	// clear buffers
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
 	memset(ans3,0x00,sizeof(ans3));
-	
+
 	// check port
 	if (port > 223) return LORAWAN_INPUT_ERROR;
-	
+
 	// check if payload is a hexadecimal string
 	for (uint8_t i=0;i<strlen(payload);i++)
 	{
-		if (((payload[i] < '0') || (payload[i] > '9')) && 
-			((payload[i] < 'A') || (payload[i] > 'F')) && 
+		if (((payload[i] < '0') || (payload[i] > '9')) &&
+			((payload[i] < 'A') || (payload[i] > 'F')) &&
 			((payload[i] < 'a') || (payload[i] > 'f')))
 		{
 			return LORAWAN_INPUT_ERROR;
 		}
 	}
-	
+
 	// create "mac tx cnf <port> <data>" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[5])),port,payload);
 	// create "ok" answer
@@ -1888,10 +1888,10 @@ uint8_t WaspLoRaWAN::sendConfirmed(uint8_t port, char* payload)
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
 	// create "not_joined" answer
 	sprintf_P(ans3,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[18])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,ans3,1000);
-	
+
 	if (status == 1)
 	{
 		// clear buffer
@@ -1900,21 +1900,21 @@ uint8_t WaspLoRaWAN::sendConfirmed(uint8_t port, char* payload)
 		memset(ans3,0x00,sizeof(ans3));
 		memset(ans4,0x00,sizeof(ans4));
 		memset(carr,0x00,sizeof(carr));
-		
+
 		// mac_rx
 		sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[3])));
 		// mac_tx_ok
 		strcpy_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[8])));
 		// mac_err
-		strcpy_P(ans3,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[15])));		
+		strcpy_P(ans3,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[15])));
 		// invalid_data_len
 		strcpy_P(ans4,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[16])));
 		// \r\n
 		strcpy_P(carr,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
-		
+
 		//wait for response
 		status = waitFor(ans1, ans2, ans3, ans4, 20000);
-		
+
 		if (status == 1)
 		{
 			waitFor(carr,500);
@@ -1922,12 +1922,12 @@ uint8_t WaspLoRaWAN::sendConfirmed(uint8_t port, char* payload)
 			{
 				char* pch = strtok((char*) _buffer," \r\n");
 				_port = atoi(pch);
-				
+
 				pch = strtok(NULL," \r\n");
-								
+
 				memset(_data,0x00,sizeof(_data));
 				strncpy(_data, pch, sizeof(_data)-1);
-			
+
 				saveConfig();
 				_dataReceived = true;
 				return LORAWAN_ANSWER_OK;
@@ -1978,22 +1978,22 @@ uint8_t WaspLoRaWAN::sendConfirmed(uint8_t port, char* payload)
 
 
 /*!
- * 
+ *
  * @brief	This function sends a LoRaWAN packet and waits for ACK
- * 	
+ *
  * @param 	char* data:	data to be sent
  * 			uint8_t port: port number to send data
- * 
+ *
  * @remarks	data is a sequence of digit representing the value of byte stream
- * 			expressed in hexadecimal value (i.e.: payload =12A435 – the payload 
+ * 			expressed in hexadecimal value (i.e.: payload =12A435 – the payload
  * 			is composed by the following byte stream: 0x12, 0xA4, 0x35 – 6 digit
  * 			converted in 3 bytes). The maximum length of frame is 584 digit (292 Bytes).
  * 			User can check _datareceived to know if a downlink was performed
- * 	
- * @return		 
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  * 	@arg	'4' if data length error
  * 	@arg	'5' if error when sending data
  * 	@arg	'6' if module hasn't joined to a network
@@ -2008,10 +2008,10 @@ uint8_t WaspLoRaWAN::sendConfirmed(uint8_t port, uint8_t* payload, uint16_t leng
 	char ans4[20];
 	char byte2send[3];
 	char carr[5];
-	
+
 	// clear data received flag
 	_dataReceived = false;
-	
+
 	// clear buffers
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
@@ -2019,10 +2019,10 @@ uint8_t WaspLoRaWAN::sendConfirmed(uint8_t port, uint8_t* payload, uint16_t leng
 	memset(ans3,0x00,sizeof(ans3));
 	memset(byte2send,0x00,sizeof(byte2send));
 	memset(carr,0x00,sizeof(carr));
-	
+
 	// check port
 	if (port > 223) return LORAWAN_INPUT_ERROR;
-	
+
 	// create "mac tx cnf <port> " command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[82])),port);
 	// create "ok" answer
@@ -2052,19 +2052,19 @@ uint8_t WaspLoRaWAN::sendConfirmed(uint8_t port, uint8_t* payload, uint16_t leng
 		memset(ans2,0x00,sizeof(ans2));
 		memset(ans3,0x00,sizeof(ans3));
 		memset(ans4,0x00,sizeof(ans4));
-		
+
 		// mac_rx
 		sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[3])));
 		// mac_tx_ok
 		strcpy_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[8])));
 		// mac_err
-		strcpy_P(ans3,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[15])));		
+		strcpy_P(ans3,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[15])));
 		// invalid_data_len
 		strcpy_P(ans4,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[16])));
-		
+
 		//wait for response
 		status = waitFor(ans1, ans2, ans3, ans4, 20000);
-		
+
 		if (status == 1)
 		{
 			waitFor(carr,500);
@@ -2072,12 +2072,12 @@ uint8_t WaspLoRaWAN::sendConfirmed(uint8_t port, uint8_t* payload, uint16_t leng
 			{
 				char* pch = strtok((char*) _buffer," \r\n");
 				_port = atoi(pch);
-				
+
 				pch = strtok(NULL," \r\n");
-								
+
 				memset(_data,0x00,sizeof(_data));
 				strncpy(_data, pch, sizeof(_data)-1);
-			
+
 				saveConfig();
 				_dataReceived = true;
 				return LORAWAN_ANSWER_OK;
@@ -2128,22 +2128,22 @@ uint8_t WaspLoRaWAN::sendConfirmed(uint8_t port, uint8_t* payload, uint16_t leng
 
 
 /*!
- * 
+ *
  * @brief	This function sends a LoRaWAN packet without ACK
- * 	
+ *
  * @param 	char* data:	data to be sent
  * 			uint8_t port: port number to send data
- * 
+ *
  * @remarks	data is a sequence of digit representing the value of byte stream
- * 			expressed in hexadecimal value (i.e.: payload =12A435 – the payload 
+ * 			expressed in hexadecimal value (i.e.: payload =12A435 – the payload
  * 			is composed by the following byte stream: 0x12, 0xA4, 0x35 – 6 digit
  * 			converted in 3 bytes). The maximum length of frame is 584 digit (292 Bytes).
  * 			User can check _datareceived to know if a downlink was performed
- * 	
- * @return		 
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  * 	@arg	'4' if data length error
  * 	@arg	'5' if error when sending data
  * 	@arg	'6' if module hasn't joined to a network
@@ -2157,29 +2157,29 @@ uint8_t WaspLoRaWAN::sendUnconfirmed(uint8_t port, char* payload)
 	char ans3[20];
 	char ans4[20];
 	char carr[5];
-	
+
 	// clear data received flag
 	_dataReceived = false;
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
 	memset(ans3,0x00,sizeof(ans3));
-	
+
 	// check port
 	if (port > 223) return LORAWAN_INPUT_ERROR;
-	
+
 	// check if payload is a hexadecimal string
 	for (uint8_t i=0;i<strlen(payload);i++)
 	{
-		if (((payload[i] < '0') || (payload[i] > '9')) && 
-			((payload[i] < 'A') || (payload[i] > 'F')) && 
+		if (((payload[i] < '0') || (payload[i] > '9')) &&
+			((payload[i] < 'A') || (payload[i] > 'F')) &&
 			((payload[i] < 'a') || (payload[i] > 'f')))
 		{
 			return LORAWAN_INPUT_ERROR;
 		}
 	}
-	
+
 	// create "mac tx uncnf <port> <data>" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[6])),port,payload);
 	// create "ok" answer
@@ -2188,7 +2188,7 @@ uint8_t WaspLoRaWAN::sendUnconfirmed(uint8_t port, char* payload)
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
 	// create "not_joined" answer
 	sprintf_P(ans3,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[18])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,ans3,500);
 
@@ -2200,7 +2200,7 @@ uint8_t WaspLoRaWAN::sendUnconfirmed(uint8_t port, char* payload)
 		memset(ans3,0x00,sizeof(ans3));
 		memset(ans4,0x00,sizeof(ans4));
 		memset(carr,0x00,sizeof(carr));
-			
+
 		// mac_rx <port>
 		sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[3])));
 		// mac_tx_ok
@@ -2211,24 +2211,24 @@ uint8_t WaspLoRaWAN::sendUnconfirmed(uint8_t port, char* payload)
 		sprintf_P(ans4,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[16])));
 		// \r\n
 		sprintf_P(carr,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
-		
+
 		//wait for response
 		status = waitFor(ans1, ans2, ans3, ans4, 20000);
-		
+
 		if (status == 1)
 		{
 			waitFor(carr,500);
-			
+
 			if (_length > 0)
 			{
 				char* pch = strtok((char*) _buffer," \r\n");
 				_port = atoi(pch);
-				
+
 				pch = strtok(NULL," \r\n");
-								
+
 				memset(_data,0x00,sizeof(_data));
 				strncpy(_data, pch, sizeof(_data)-1);
-			
+
 				saveConfig();
 				_dataReceived = true;
 				return LORAWAN_ANSWER_OK;
@@ -2279,22 +2279,22 @@ uint8_t WaspLoRaWAN::sendUnconfirmed(uint8_t port, char* payload)
 
 
 /*!
- * 
+ *
  * @brief	This function sends a LoRaWAN packet and waits for ACK
- * 	
+ *
  * @param 	char* data:	data to be sent
  * 			uint8_t port: port number to send data
- * 
+ *
  * @remarks	data is a sequence of digit representing the value of byte stream
- * 			expressed in hexadecimal value (i.e.: payload =12A435 – the payload 
+ * 			expressed in hexadecimal value (i.e.: payload =12A435 – the payload
  * 			is composed by the following byte stream: 0x12, 0xA4, 0x35 – 6 digit
  * 			converted in 3 bytes). The maximum length of frame is 584 digit (292 Bytes).
  * 			User can check _datareceived to know if a downlink was performed
- * 	
- * @return		 
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  * 	@arg	'4' if data length error
  * 	@arg	'5' if error when sending data
  * 	@arg	'6' if module hasn't joined to a network
@@ -2309,10 +2309,10 @@ uint8_t WaspLoRaWAN::sendUnconfirmed(uint8_t port, uint8_t* payload, uint16_t le
 	char ans4[20];
 	char byte2send[3];
 	char carr[5];
-	
+
 	// clear data received flag
 	_dataReceived = false;
-	
+
 	// clear buffers
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
@@ -2320,10 +2320,10 @@ uint8_t WaspLoRaWAN::sendUnconfirmed(uint8_t port, uint8_t* payload, uint16_t le
 	memset(ans3,0x00,sizeof(ans3));
 	memset(carr,0x00,sizeof(carr));
 	memset(byte2send,0x00,sizeof(byte2send));
-	
+
 	// check port
 	if (port > 223) return LORAWAN_INPUT_ERROR;
-	
+
 	// create "mac tx uncnf <port> " command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[83])),port);
 	// create "ok" answer
@@ -2354,7 +2354,7 @@ uint8_t WaspLoRaWAN::sendUnconfirmed(uint8_t port, uint8_t* payload, uint16_t le
 		memset(ans3,0x00,sizeof(ans3));
 		memset(ans4,0x00,sizeof(ans4));
 		memset(carr,0x00,sizeof(carr));
-			
+
 		// mac_rx
 		sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[3])));
 		// mac_tx_ok
@@ -2365,10 +2365,10 @@ uint8_t WaspLoRaWAN::sendUnconfirmed(uint8_t port, uint8_t* payload, uint16_t le
 		strcpy_P(ans4,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[16])));
 		// create "\r\n" answer
 		sprintf_P(carr,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
-	
+
 		//wait for response
 		status = waitFor(ans1, ans2, ans3, ans4, 20000);
-		
+
 		if (status == 1)
 		{
 			waitFor(carr,500);
@@ -2376,12 +2376,12 @@ uint8_t WaspLoRaWAN::sendUnconfirmed(uint8_t port, uint8_t* payload, uint16_t le
 			{
 				char* pch = strtok((char*) _buffer," \r\n");
 				_port = atoi(pch);
-				
+
 				pch = strtok(NULL," \r\n");
-								
+
 				memset(_data,0x00,sizeof(_data));
 				strncpy(_data, pch, sizeof(_data)-1);
-			
+
 				saveConfig();
 				_dataReceived = true;
 				return LORAWAN_ANSWER_OK;
@@ -2431,15 +2431,15 @@ uint8_t WaspLoRaWAN::sendUnconfirmed(uint8_t port, uint8_t* payload, uint16_t le
 }
 
 
-/*! 
+/*!
  * @brief	This function is used to set the ADR status from module
- * 
+ *
  * @param	char* state: "on"/"off"
- * 
- * @return		
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  *  @arg	'7' if input parameter error
  */
 uint8_t WaspLoRaWAN::setADR(char* state)
@@ -2450,25 +2450,25 @@ uint8_t WaspLoRaWAN::setADR(char* state)
 
 	// check state
 	if ((strcmp(state, "on")) && (strcmp(state, "off"))) return LORAWAN_INPUT_ERROR;
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "mac set adr" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[19])),state);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-		
+
 	if (status == 1)
 	{
 		if (strcmp(state, "on")  == 0) _adr = true;
-		if (strcmp(state, "off") == 0) _adr = false;		
+		if (strcmp(state, "off") == 0) _adr = false;
 		return LORAWAN_ANSWER_OK;
 	}
 	else if (status == 2)
@@ -2483,13 +2483,13 @@ uint8_t WaspLoRaWAN::setADR(char* state)
 
 
 
-/*! 
+/*!
  * @brief	This function is used to read the ADR status from module
- * 
- * @return		
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getADR()
 {
@@ -2497,22 +2497,22 @@ uint8_t WaspLoRaWAN::getADR()
 	char ans1[15];
 	char ans2[15];
 	char ans3[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
 	memset(ans3,0x00,sizeof(ans3));
-	
+
 	// create "mac get adr" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[30])));
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[9])));
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[10])));
 	// create "invalid_param" answer
 	sprintf_P(ans3,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,ans3,500);
-	
+
 	if (status == 1)
 	{
 		_adr = true;
@@ -2527,7 +2527,7 @@ uint8_t WaspLoRaWAN::getADR()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -2535,34 +2535,34 @@ uint8_t WaspLoRaWAN::getADR()
 
 
 
-/*! 
+/*!
  * @brief	This function is used to read the duty cycle prescaler from module
- * 
- * @return		
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getDutyCyclePrescaler()
 {
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "mac get dcycle" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[31])));
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		_dCyclePS = parseIntValue();
@@ -2572,7 +2572,7 @@ uint8_t WaspLoRaWAN::getDutyCyclePrescaler()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -2580,37 +2580,37 @@ uint8_t WaspLoRaWAN::getDutyCyclePrescaler()
 
 
 
-/*! 
+/*!
  * @brief	This function pauses MAC functionality so the module is able
  * 			to use radio functions.
- * 
+ *
  * @remarks	This function must be called before using radio RX and TX
- * 	
- * @return		 
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::macPause()
 {
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "mac pause" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[9])));
 	// create "4294967245" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[14])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		return LORAWAN_ANSWER_OK;
@@ -2625,34 +2625,34 @@ uint8_t WaspLoRaWAN::macPause()
 	}
 }
 
-/*! 
+/*!
  * @brief	This function resumes MAC functionality
- * 	
- * @return		 
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::macResume()
 {
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "mac resume" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[10])));
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		return LORAWAN_ANSWER_OK;
@@ -2671,14 +2671,14 @@ uint8_t WaspLoRaWAN::macResume()
 
 /*!
  * @brief	This function sets the frequency on the given channel ID
- * 
+ *
  * @param	uint32_t freq: frequency to be set [863250000..869750000]
  * 											   [433250000..434550000]
  * 			uint8_t channel: channel to be set [3..15]
- * @return	
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  *  @arg	'7' if input parameter error
  * 	@arg	'8' if module does not support function
  */
@@ -2687,26 +2687,26 @@ uint8_t WaspLoRaWAN::setChannelFreq(uint8_t channel, uint32_t freq)
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	//check module (this function is only available for RN2483)
 	if (_version == RN2903_MODULE)
 	{
 		return LORAWAN_VERSION_ERROR;
 	}
-		
+
 	// check channel
 	if (channel > 15 || channel <3) return LORAWAN_INPUT_ERROR;
-	
+
 	// check frequency settings
 	if (freq < 433250000) return LORAWAN_INPUT_ERROR;
 	if ((freq > 434550000)&&(freq < 863250000)) return LORAWAN_INPUT_ERROR;
-	if (freq > 869750000) return LORAWAN_INPUT_ERROR;	
-	
+	if (freq > 869750000) return LORAWAN_INPUT_ERROR;
+
 	// clear buffers
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "mac set ch freq" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[20])),channel,freq);
 	// create "ok" answer
@@ -2716,7 +2716,7 @@ uint8_t WaspLoRaWAN::setChannelFreq(uint8_t channel, uint32_t freq)
 
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		_freq[channel] = freq;
@@ -2736,26 +2736,26 @@ uint8_t WaspLoRaWAN::setChannelFreq(uint8_t channel, uint32_t freq)
 
 /*!
  * @brief	This function gets the operating frequency on the given channel
- * 	
+ *
  * @param	uint8_t channel
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  * 	@arg	'7' if input parameter error
- * 	@arg	'8' if unrecognized module 
+ * 	@arg	'8' if unrecognized module
  */
 uint8_t WaspLoRaWAN::getChannelFreq(uint8_t channel)
 {
 	uint8_t status;
 	char ans2[15];
 	char ans1[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	switch (_version)
 	{
 		case RN2483_MODULE:
@@ -2764,28 +2764,28 @@ uint8_t WaspLoRaWAN::getChannelFreq(uint8_t channel)
 					return LORAWAN_INPUT_ERROR;
 				}
 				break;
-				
+
 		case RN2903_MODULE:
 				if (channel > 71)
 				{
 					return LORAWAN_INPUT_ERROR;
-				}			
+				}
 				break;
-				
+
 		default:
-				return LORAWAN_VERSION_ERROR;			
+				return LORAWAN_VERSION_ERROR;
 	}
-	
+
 	// create "mac get ch freq" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[35])),channel);
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,300);
-	
+
 	if (status == 1)
 	{
 		_freq[channel] = parseValue(10);
@@ -2805,17 +2805,17 @@ uint8_t WaspLoRaWAN::getChannelFreq(uint8_t channel)
 
 /*!
  * @brief	This function sets the duty cycle on the given channel ID
- * 
+ *
  * @param	uint16_t dcycle: frequency to be set [0..65535]
  * 			uint8_t channel: channel to be set [0..15]
- * 
- * @remarks	The "dcycle" value that needs to be configured can be obtained 
+ *
+ * @remarks	The "dcycle" value that needs to be configured can be obtained
  * 			from the actual duty cycle X (in percentage) using the following formula:
  * 			dcycle = (100/X) – 1
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  *  @arg	'7' if input channel parameter error
  *	@arg	'8' module does not support function
@@ -2826,30 +2826,30 @@ uint8_t WaspLoRaWAN::setChannelDutyCycle(uint8_t channel, uint16_t dcycle)
 	float dutycycle;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	//check module (this function is only available for RN2483)
 	if (_version == RN2903_MODULE)
 	{
 		return LORAWAN_VERSION_ERROR;
-	}	
-	
+	}
+
 	// check channel
 	if (channel > 15) return LORAWAN_INPUT_ERROR;
-	
+
 	// create "mac set ch dcycle" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[21])),channel,dcycle);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2);
-	
+
 	if (status == 1)
 	{
 		_dCycle[channel] = dcycle;
@@ -2868,16 +2868,16 @@ uint8_t WaspLoRaWAN::setChannelDutyCycle(uint8_t channel, uint16_t dcycle)
 
 /*!
  * @brief	This function gets the operating duty channel on the given channel
- * 	
+ *
  * @param	uint8_t channel
- * 
+ *
  * @remarks	The "dcycle" value obtained from the module helps us to calculate
  * 			duty cycle percentage "X" using the following formula:
  * 			dcycle = (100/X) – 1
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  *	@arg	'8' module does not support function
  */
@@ -2886,30 +2886,30 @@ uint8_t WaspLoRaWAN::getChannelDutyCycle(uint8_t channel)
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	//check module (this function is only available for RN2483)
 	if (_version == RN2903_MODULE)
 	{
 		return LORAWAN_VERSION_ERROR;
-	}	
-	
+	}
+
 	// check channel
 	if (channel > 15) return LORAWAN_INPUT_ERROR;
-	
+
 	// create "mac get ch dcycle" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[36])),channel);
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,300);
-	
+
 	if (status == 1)
 	{
 		_dCycle[channel] = parseValue(10);
@@ -2930,7 +2930,7 @@ uint8_t WaspLoRaWAN::getChannelDutyCycle(uint8_t channel)
 
 /*!
  * @brief	This function sets the data rate range on the given channel ID
- * 
+ *
  * @param	uint8_t minDR: datarate to be set
  * 			uint8_t maxDR: datarate to be set
  * 			uint8_t channel: channel to be set
@@ -2943,9 +2943,9 @@ uint8_t WaspLoRaWAN::getChannelDutyCycle(uint8_t channel)
  * 						minDR [0..3]
  *  	                maxDR [0..3]
  *						channel [0..63]
- * @return	
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  *	@arg	'7' if input parameter error
  *	@arg	'8' unrecognized module
@@ -2955,11 +2955,11 @@ uint8_t WaspLoRaWAN::setChannelDRRange(uint8_t channel, uint8_t minDR, uint8_t m
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-		
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	switch (_version)
 	{
 		case RN2483_MODULE:
@@ -2968,18 +2968,18 @@ uint8_t WaspLoRaWAN::setChannelDRRange(uint8_t channel, uint8_t minDR, uint8_t m
 					return LORAWAN_INPUT_ERROR;
 				}
 				break;
-				
+
 		case RN2903_MODULE:
 				if ((channel > 63) || (minDR > 3) || (maxDR > 3))
 				{
 					return LORAWAN_INPUT_ERROR;
-				}			
+				}
 				break;
-				
+
 		default:
-				return LORAWAN_VERSION_ERROR;			
+				return LORAWAN_VERSION_ERROR;
 	}
-	
+
 	// create "mac set ch drrange" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[22])),channel,minDR,maxDR);
 	// create "ok" answer
@@ -2989,7 +2989,7 @@ uint8_t WaspLoRaWAN::setChannelDRRange(uint8_t channel, uint8_t minDR, uint8_t m
 
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		_drrMin[channel] = minDR;
@@ -3009,13 +3009,13 @@ uint8_t WaspLoRaWAN::setChannelDRRange(uint8_t channel, uint8_t minDR, uint8_t m
 
 /*!
  * @brief	This function gets the data rate range on the given channel
- * 	
+ *
  * @param	uint8_t channel
  * 			For RN2483: channel [0..15]
  * 			For RN2903: channel [0..71]
- * @return	
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  *  @arg	'7' if input parameter error
  *	@arg	'8' unrecognized module
@@ -3025,11 +3025,11 @@ uint8_t WaspLoRaWAN::getChannelDRRange(uint8_t channel)
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	switch (_version)
 	{
 		case RN2483_MODULE:
@@ -3038,18 +3038,18 @@ uint8_t WaspLoRaWAN::getChannelDRRange(uint8_t channel)
 					return LORAWAN_INPUT_ERROR;
 				}
 				break;
-				
+
 		case RN2903_MODULE:
 				if (channel > 71)
 				{
 					return LORAWAN_INPUT_ERROR;
-				}			
+				}
 				break;
-				
+
 		default:
-				return LORAWAN_VERSION_ERROR;			
+				return LORAWAN_VERSION_ERROR;
 	}
-	
+
 	// create "mac get ch drrange" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[37])),channel);
 	// create "\r\n" answer
@@ -3059,10 +3059,10 @@ uint8_t WaspLoRaWAN::getChannelDRRange(uint8_t channel)
 
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,300);
-	
+
 	if (status == 1)
 	{
-		char * pch;	
+		char * pch;
 		pch = strtok((char*) _buffer," \r\n");
 		if (pch != NULL)
 		{
@@ -3075,7 +3075,7 @@ uint8_t WaspLoRaWAN::getChannelDRRange(uint8_t channel)
 				return LORAWAN_ANSWER_OK;
 			}
 			return LORAWAN_ANSWER_ERROR;
-		}		
+		}
 		return LORAWAN_ANSWER_ERROR;
 	}
 	else if (status == 2)
@@ -3091,13 +3091,13 @@ uint8_t WaspLoRaWAN::getChannelDRRange(uint8_t channel)
 
 /*!
  * @brief	This function sets the status on the given channel ID
- * 
+ *
  * @param	char* state: state "on"/"off"
  * 			uint8_t channel: channel to be set [0..15]
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  *	@arg	'7' if input parameter error
  *	@arg	'8' unrecognized module
@@ -3107,19 +3107,19 @@ uint8_t WaspLoRaWAN::setChannelStatus(uint8_t channel, char* state)
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "on" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[9])));
 	// create "off" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[10])));
-	
+
 	// check state
 	if ((strcmp(state, ans1)) && (strcmp(state, ans2))) return LORAWAN_INPUT_ERROR;
-	
+
 	switch (_version)
 	{
 		case RN2483_MODULE:
@@ -3128,31 +3128,31 @@ uint8_t WaspLoRaWAN::setChannelStatus(uint8_t channel, char* state)
 					return LORAWAN_INPUT_ERROR;
 				}
 				break;
-				
+
 		case RN2903_MODULE:
 				if (channel > 71)
 				{
 					return LORAWAN_INPUT_ERROR;
-				}			
+				}
 				break;
-				
+
 		default:
-				return LORAWAN_VERSION_ERROR;			
+				return LORAWAN_VERSION_ERROR;
 	}
-	
+
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "mac set ch state" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[23])),channel,state);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		_status[channel] = state;
@@ -3172,12 +3172,12 @@ uint8_t WaspLoRaWAN::setChannelStatus(uint8_t channel, char* state)
 
 /*!
  * @brief	This function gets the status of the given channel
- * 	
+ *
  * @param	uint8_t channel
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  *	@arg	'7' if input parameter error
  *	@arg	'8' unrecognized module
@@ -3188,12 +3188,12 @@ uint8_t WaspLoRaWAN::getChannelStatus(uint8_t channel)
 	char ans1[15];
 	char ans2[15];
 	char ans3[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
 	memset(ans3,0x00,sizeof(ans3));
-	
+
 	switch (_version)
 	{
 		case RN2483_MODULE:
@@ -3202,18 +3202,18 @@ uint8_t WaspLoRaWAN::getChannelStatus(uint8_t channel)
 					return LORAWAN_INPUT_ERROR;
 				}
 				break;
-				
+
 		case RN2903_MODULE:
 				if (channel > 71)
 				{
 					return LORAWAN_INPUT_ERROR;
-				}			
+				}
 				break;
-				
+
 		default:
-				return LORAWAN_VERSION_ERROR;			
+				return LORAWAN_VERSION_ERROR;
 	}
-	
+
 	// create "mac get ch status" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[38])),channel);
 	// create "on" answer
@@ -3222,10 +3222,10 @@ uint8_t WaspLoRaWAN::getChannelStatus(uint8_t channel)
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[10])));
 	// create "invalid_param" answer
 	sprintf_P(ans3,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,ans3,500);
-	
+
 	if (status == 1)
 	{
 		_status[channel] = true;
@@ -3250,34 +3250,34 @@ uint8_t WaspLoRaWAN::getChannelStatus(uint8_t channel)
 /*!
  * @brief	This function is used to configure number of retransmisions
  * 				for an uplink confirmed packet
- * 
+ *
  * @param	uint8_t retries: number of retries [0..255]
- * 	
- * @return		
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::setRetries(uint8_t retries)
 {
-	uint8_t status;	
+	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "mac set retx" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[69])),retries);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,100);
-	
+
 	if (status == 1)
 	{
 		_retries = retries;
@@ -3287,30 +3287,30 @@ uint8_t WaspLoRaWAN::setRetries(uint8_t retries)
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
 }
 
 
-/*! 
+/*!
  * @brief	This function is used to read the power index from module
- * 
- * @return		
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getRetries()
 {
-	uint8_t status;	
+	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
-	
+
 	// create "mac get retx" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[70])));
 	// create "\r\n" answer
@@ -3320,7 +3320,7 @@ uint8_t WaspLoRaWAN::getRetries()
 
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,100);
-	
+
 	if (status == 1)
 	{
 		_retries = parseIntValue();
@@ -3330,7 +3330,7 @@ uint8_t WaspLoRaWAN::getRetries()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -3341,12 +3341,12 @@ uint8_t WaspLoRaWAN::getRetries()
 
 
 
-/*! 
+/*!
  * @brief	This function gets current band of operation
- * 
+ *
  * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  *	@arg	'8' module does not support function
  */
@@ -3355,27 +3355,27 @@ uint8_t WaspLoRaWAN::getBand()
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	//check module (this function is only available for RN2483)
 	if (_version == RN2903_MODULE)
 	{
 		return LORAWAN_VERSION_ERROR;
-	}	
-	
+	}
+
 	// create "mac get band" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[28])));
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,300);
-	
+
 	if (status == 1)
 	{
 		memset(_band, 0x00, sizeof(_band));
@@ -3395,10 +3395,10 @@ uint8_t WaspLoRaWAN::getBand()
 
 /*!
  * @brief	This function gets the demodulation margin from the module
- * 	
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getMargin()
@@ -3406,21 +3406,21 @@ uint8_t WaspLoRaWAN::getMargin()
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "mac get mrgn" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[32])));
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,300);
-	
+
 	if (status == 1)
 	{
 		uint8_t value = parseValue(10);
@@ -3431,19 +3431,19 @@ uint8_t WaspLoRaWAN::getMargin()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
 }
 
 /*!
- * @brief	This function gets the number of gateways that successfully 
+ * @brief	This function gets the number of gateways that successfully
  * 			received the last Linck Check Request from the module
- * 	
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getGatewayNumber()
@@ -3451,21 +3451,21 @@ uint8_t WaspLoRaWAN::getGatewayNumber()
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "mac get gwnb" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[33])));
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,300);
-	
+
 	if (status == 1)
 	{
 		_gwNumber = parseValue(10);
@@ -3475,7 +3475,7 @@ uint8_t WaspLoRaWAN::getGatewayNumber()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -3483,36 +3483,36 @@ uint8_t WaspLoRaWAN::getGatewayNumber()
 
 
 /*!
- * @brief	This function sets the value of the uplink frame counter that will 
+ * @brief	This function sets the value of the uplink frame counter that will
  * 			be used for the next uplink transmission.
- * 
- * @param	uint8_t counter: 
- * 	
- * @return		
+ *
+ * @param	uint8_t counter:
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::setUpCounter(uint32_t counter)
 {
-	uint8_t status;	
+	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "mac set upctr" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[72])),counter);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		_upCounter = counter;
@@ -3523,32 +3523,32 @@ uint8_t WaspLoRaWAN::setUpCounter(uint32_t counter)
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
 }
 
 
-/*! 
- * @brief	This function is used to get the value of the uplink frame counter 
+/*!
+ * @brief	This function is used to get the value of the uplink frame counter
  * 			that will be used for the next uplink transmission.
- * 
- * @return		
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getUpCounter()
 {
-	uint8_t status;	
+	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "mac get upctr" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[73])));
 	// create "\r\n" answer
@@ -3558,7 +3558,7 @@ uint8_t WaspLoRaWAN::getUpCounter()
 
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,100);
-	
+
 	if (status == 1)
 	{
 		_upCounter = parseValue(10);
@@ -3568,7 +3568,7 @@ uint8_t WaspLoRaWAN::getUpCounter()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -3576,36 +3576,36 @@ uint8_t WaspLoRaWAN::getUpCounter()
 
 
 /*!
- * @brief	This function sets the value of the downlink frame counter that will 
+ * @brief	This function sets the value of the downlink frame counter that will
  * 			be used for the next downlink transmission.
- * 
- * @param	uint8_t counter: 
- * 	
- * @return		
+ *
+ * @param	uint8_t counter:
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::setDownCounter(uint32_t counter)
 {
-	uint8_t status;	
+	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "mac set dnctr" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[74])),counter);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		_downCounter = counter;
@@ -3616,33 +3616,33 @@ uint8_t WaspLoRaWAN::setDownCounter(uint32_t counter)
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
 }
 
 /*!
- * @brief	This function sets the time interval for the link check 
+ * @brief	This function sets the time interval for the link check
  * 			process to be triggered periodically
- * 
- * @param	uint8_t counter: 
- * 	
- * @return		
+ *
+ * @param	uint8_t counter:
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::setLinkCheck(uint16_t time)
 {
-	uint8_t status;	
+	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "mac set dnctr" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[77])),time);
 	// create "ok" answer
@@ -3652,7 +3652,7 @@ uint8_t WaspLoRaWAN::setLinkCheck(uint16_t time)
 
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		return LORAWAN_ANSWER_OK;
@@ -3661,32 +3661,32 @@ uint8_t WaspLoRaWAN::setLinkCheck(uint16_t time)
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
 }
 
 
-/*! 
- * @brief	This function is used to get the value of the downlink frame counter 
+/*!
+ * @brief	This function is used to get the value of the downlink frame counter
  * 			that will be used for the next downlink transmission.
- * 
- * @return		
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getDownCounter()
 {
-	uint8_t status;	
+	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "mac get dnctr" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[75])));
 	// create "\r\n" answer
@@ -3696,7 +3696,7 @@ uint8_t WaspLoRaWAN::getDownCounter()
 
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,100);
-	
+
 	if (status == 1)
 	{
 		_downCounter = parseValue(10);
@@ -3706,7 +3706,7 @@ uint8_t WaspLoRaWAN::getDownCounter()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -3720,49 +3720,49 @@ uint8_t WaspLoRaWAN::getDownCounter()
 
 /*!
  * @brief	Send a packet via radio
- * 
+ *
  * @param	char* message: char array that will be send
- * 
+ *
  * @remarks	data is a sequence of digit representing the value of byte stream
- * 			expressed in hexadecimal value (i.e. radio tx 12A435 – the payload 
+ * 			expressed in hexadecimal value (i.e. radio tx 12A435 – the payload
  * 			is composed by the following byte stream: 0x12, 0xA4, 0x35 – 6 digit
  * 			converted in 3 bytes). The maximum length of frame is 510 digit (255 Bytes)
  * 			for LoRa modulation and 128 digit (64 bytes) FSK modulation
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
  * 	@arg	'1' if there was an error
  * 	@arg	'2' if no answer
  *  @arg	'7' if input parameter error
  */
 uint8_t WaspLoRaWAN::sendRadio(char * message)
-{	
+{
 	char ans1[15];
 	char ans2[15];
 	uint8_t status;
-	
+
 	// clear buffers
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// check if payload is a hexadecimal string
 	for (uint8_t i=0;i<strlen(message);i++)
 	{
-		if (((message[i] < '0') || (message[i] > '9')) && 
-			((message[i] < 'A') || (message[i] > 'F')) && 
+		if (((message[i] < '0') || (message[i] > '9')) &&
+			((message[i] < 'A') || (message[i] > 'F')) &&
 			((message[i] < 'a') || (message[i] > 'f')))
 		{
 			return LORAWAN_INPUT_ERROR;
 		}
 	}
-	
+
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[40])), message);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,600);
 
@@ -3770,15 +3770,15 @@ uint8_t WaspLoRaWAN::sendRadio(char * message)
 	{
 		memset(ans1,0x00,sizeof(ans1));
 		memset(ans2,0x00,sizeof(ans2));
-		
+
 		// create "radio_tx_ok" answer
 		sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[4])));
 		// create "radio_err" answer
 		sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[12])));
-		
+
 		//wait for response
 		status = waitFor(ans1,ans2,3000);
-		
+
 		if (status == 1)
 		{
 			return LORAWAN_ANSWER_OK;
@@ -3806,23 +3806,23 @@ uint8_t WaspLoRaWAN::sendRadio(char * message)
 
 /*!
  * @brief	Receive a packet via radio
- * 
+ *
  * @param	uint32_t timeout: time to wait for data
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
  * 	@arg	'1' if there was an error
  * 	@arg	'2' it no answer
- * 
+ *
  */
 uint8_t WaspLoRaWAN::receiveRadio(uint32_t timeout)
 {
-	uint8_t error;	
-	uint8_t status;	
+	uint8_t error;
+	uint8_t status;
 	char ans1[15];
 	char ans2[15];
 	char ans3[15];
-		
+
 	//set watch dog radio to timeout
 	error = setRadioWDT(timeout);
 	if (error == 0)
@@ -3831,29 +3831,29 @@ uint8_t WaspLoRaWAN::receiveRadio(uint32_t timeout)
 		memset(_command,0x00,sizeof(_command));
 		memset(ans1,0x00,sizeof(ans1));
 		memset(ans2,0x00,sizeof(ans2));
-		
+
 		// create "radio rx" command
 		sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[39])));
 		// create "ok" answer
 		sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 		// create "invalid_param" answer
 		sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-		
+
 		//send command and wait for ans
 		status = sendCommand(_command,ans1,ans2,100);
-		
+
 		if (status == 1)
 		{
 			memset(ans1,0x00,sizeof(ans1));
 			memset(ans2,0x00,sizeof(ans2));
-			
+
 			// create "radio_rx  " answer
 			sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[7])));
 			// create "\r\n" answer
 			sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 			// create "radio_err" answer
 			sprintf_P(ans3,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[12])));
-			
+
 			//wait for response
 			status = waitFor(ans1,ans3,timeout);
 
@@ -3861,13 +3861,13 @@ uint8_t WaspLoRaWAN::receiveRadio(uint32_t timeout)
 			{
 				//wait for response
 				status = waitFor(ans2,1000);
-				
+
 				_buffer[_length-1] = 0x00;
 				_buffer[_length-2] = 0x00;
 				_length -= 2;
-				
+
 				return LORAWAN_ANSWER_OK;
-			}				
+			}
 			return LORAWAN_NO_ANSWER;
 		}
 		else if (status == 2)
@@ -3877,12 +3877,227 @@ uint8_t WaspLoRaWAN::receiveRadio(uint32_t timeout)
 	}
 	return LORAWAN_NO_ANSWER;
 }
- 
- 
+
+
+/*!
+ * @brief	Receive a packet via radio and send an ACK to the source
+ *
+ * @param	uint32_t timeout: time to wait for data
+ *
+ * @return
+ * 	@arg	'0' if OK
+ * 	@arg	'1' if there was an error
+ * 	@arg	'2' it no answer
+ *
+ */
+ uint8_t WaspLoRaWAN::receiveRadioACK(uint32_t timeout)
+ {
+   uint8_t error;
+   uint8_t status;
+   uint8_t state = 2;
+   char ans1[15];
+   char ans2[15];
+   char ans3[15];
+   char message[ACK_LENGTH];
+
+   //set watch dog radio to timeout
+   error = setRadioWDT(timeout);
+   if (error == 0)
+   {
+     //start radio receiving
+     memset(_command,0x00,sizeof(_command));
+     memset(ans1,0x00,sizeof(ans1));
+     memset(ans2,0x00,sizeof(ans2));
+
+     // create "radio rx" command
+     sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[39])));
+     // create "ok" answer
+     sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
+     // create "invalid_param" answer
+     sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
+
+     //send command and wait for ans
+     status = sendCommand(_command,ans1,ans2,100);
+
+     if (status == 1)
+     {
+       memset(ans1,0x00,sizeof(ans1));
+       memset(ans2,0x00,sizeof(ans2));
+
+       // create "radio_rx  " answer
+       sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[7])));
+       // create "\r\n" answer
+       sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
+       // create "radio_err" answer
+       sprintf_P(ans3,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[12])));
+
+       //wait for response
+       status = waitFor(ans1,ans3,timeout);
+
+       if (status == 1)
+       {
+         //wait for response
+         status = waitFor(ans2,1000);
+
+         _buffer[_length-1] = 0x00;
+         _buffer[_length-2] = 0x00;
+         _length -= 2;
+
+         _destination = _buffer[0];
+         #if (RN2483_debug_mode > 0)
+         USB.println(F("## Checking destination ##"));
+         #endif
+         if( (_destination != _nodeAddress) || (_destination != BROADCAST_0) )
+         {
+           #if (RN2483_debug_mode > 0)
+           USB.println(F("## Packet received is not for me ##"));
+           USB.println(millis());
+           #endif
+           return 15;
+         }
+         _reception = CORRECT_PACKET;
+         #if (RN2483_debug_mode > 0)
+         USB.println(F("## Packet received is for me ##"));
+         #endif
+
+         #if (RN2483_debug_mode > 0)
+         USB.println();
+         USB.println(F("Starting 'setACK'"));
+         #endif
+         state = setACK();
+         if( state == 0 )
+         {
+           message[0] = ACK.dst;
+           message[1] = ACK.src;
+           message[2] = ACK.packnum;
+           message[3] = ACK.length;
+           message[4] = ACK.data[0];
+
+           #if (RN2483_debug_mode > 0)
+           USB.println(F("## ACK set and written in FIFO ##"));
+           // Print the complete ACK if debug_mode
+           USB.println(F("## ACK to send:"));
+           USB.printHex(ACK.dst);			 	// Printing destination
+           USB.print("|");
+           USB.printHex(ACK.src);			 	// Printing source
+           USB.print("|");
+           USB.printHex(ACK.packnum);			// Printing ACK number
+           USB.print("|");
+           USB.printHex(ACK.length);				// Printing ACK length
+           USB.print("|");
+           USB.printHex(ACK.data[0]);			// Printing ACK payload
+           USB.println(F(" ##"));
+           USB.println();
+           #endif
+           #if (RN2483_debug_mode > 0)
+           USB.println();
+           USB.println(F("Starting 'sendWithTimeout'"));
+           #endif
+           state = sendRadio(message);
+           if( state == LORAWAN_ANSWER_OK )
+           {
+             #if (RN2483_debug_mode > 0)
+             USB.println(F("## Packet successfully sent ##"));
+             USB.println();
+             #endif
+             return 11;
+           }
+           else
+           {
+             #if (RN2483_debug_mode > 0)
+             USB.println(F("** There has been an error and packet has not been sent **"));
+             USB.println();
+             #endif
+             return 12; // There has been an error with the 'sendWithTimeout' function
+           }
+         }
+         return 10;
+       }
+       return LORAWAN_NO_ANSWER;
+     }
+     else if (status == 2)
+     {
+       return LORAWAN_ANSWER_ERROR;
+     }
+   }
+   return LORAWAN_NO_ANSWER;
+ }
+
+ /*
+ Function: Sets the node address in the module.
+ Returns: Integer that determines if there has been any error
+   state = 2  --> The command has not been executed
+   state = 1  --> There has been an error while executing the command
+   state = 0  --> The command has been executed with no errors
+   state = -1 --> Forbidden command for this protocol
+ Parameters:
+   addr: address value to set as node address.
+*/
+int8_t WaspLoRaWAN::setNodeAddress(uint8_t addr)
+{
+	byte st0;
+	byte value;
+	uint8_t state = 2;
+
+	#if (RN2483_debug_mode > 0)
+		USB.println();
+		USB.println(F("Starting 'setNodeAddress'"));
+	#endif
+
+	// check address value is within valid range
+	if( addr > 255 )
+	{
+		state = -1;
+		#if (RN2483_debug_mode > 1)
+			USB.println(F("** Node address must be less than 255 **"));
+			USB.println();
+		#endif
+	}
+	else
+	{
+		// Saving node address
+		_nodeAddress = addr;
+    #if (RN2483_debug_mode > 0)
+  		USB.println();
+  		USB.println(F("'setNodeAddress' OK"));
+  	#endif
+		// in LoRa mode
+		state = 0;
+	}
+	return state;
+}
+
+/*
+ Function: It sets an ACK in FIFO in order to send it.
+ Returns: Integer that determines if there has been any error
+   state = 2  --> The command has not been executed
+   state = 1  --> There has been an error while executing the command
+   state = 0  --> The command has been executed with no errors
+*/
+uint8_t WaspLoRaWAN::setACK()
+{
+  uint8_t state = 2;
+
+  // Setting ACK length in order to send it
+//packet_sent.length = ACK_LENGTH;
+
+  // Setting ACK
+  memset( &ACK, 0x00, sizeof(ACK) );
+  ACK.dst = packet_received.src; // ACK destination is packet source
+  ACK.src = packet_received.dst; // ACK source is packet destination
+  ACK.packnum = packet_received.packnum; // packet number that has been correctly received
+  ACK.length = 0;		  // length = 0 to show that's an ACK
+  ACK.data[0] = _reception;	// CRC of the received packet
+
+  state = 0;
+  _reception = CORRECT_PACKET;		// Updating value to next packet
+  return state;
+}
+
 /*!
  * @brief	This function is used to radiate continuous wave without any modulation
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
  * 	@arg	'1' if error
  *  @arg	'2' it no answer
@@ -3892,20 +4107,20 @@ uint8_t WaspLoRaWAN::test_ON()
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[41])));
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2);
-	
+
 	if (status == 1)
 	{
 		return LORAWAN_ANSWER_OK;
@@ -3922,27 +4137,27 @@ uint8_t WaspLoRaWAN::test_ON()
 
 
 /*!
- * @brief	Stops the continuous wave mode, this function works with module 
+ * @brief	Stops the continuous wave mode, this function works with module
  * 			identical to "reset()"
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
  * 	@arg	'1' if error
  *  @arg	'2' it no answer
- * 
+ *
  */
 uint8_t WaspLoRaWAN::test_OFF()
 {
-	uint8_t status;	
+	uint8_t status;
 	char ans1[15];
 	char ans2[15];
 	char ans3[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
 	memset(ans3,0x00,sizeof(ans3));
-	
+
 	// create "radio cw off" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[42])));
 	// create "RN2483" answer
@@ -3951,10 +4166,10 @@ uint8_t WaspLoRaWAN::test_OFF()
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[20])));
 	// create "invalid_param" answer
 	sprintf_P(ans3,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,ans3);
-	
+
 	if (status == 1)
 	{
 		_version = RN2483_MODULE;
@@ -3979,29 +4194,29 @@ uint8_t WaspLoRaWAN::test_OFF()
 
 /*!
  * @brief	This function is used to read the SNR for the last receive packet
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getRadioSNR()
 {
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "radio get snr" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[65])));
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
 
@@ -4018,7 +4233,7 @@ uint8_t WaspLoRaWAN::getRadioSNR()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -4027,37 +4242,37 @@ uint8_t WaspLoRaWAN::getRadioSNR()
 
 
 /*!
- * 
+ *
  * @brief	This function sets spreading factor for radio mode
- * 	
+ *
  * @param 	char* sprfact:	spreading factor to be set [SF7..SF12]
- * 
- * 	
- * @return		 
+ *
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::setRadioSF(char* sprfact)
 {
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "radio set sf" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[46])),sprfact);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		return LORAWAN_ANSWER_OK;
@@ -4077,10 +4292,10 @@ uint8_t WaspLoRaWAN::setRadioSF(char* sprfact)
 
 /*!
  * @brief	This function gets the operating radio spreading factor from module
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getRadioSF()
@@ -4088,21 +4303,21 @@ uint8_t WaspLoRaWAN::getRadioSF()
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "radio get sf" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[59])));
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		memset(_radioSF,0x00,sizeof(_radioSF));
@@ -4113,7 +4328,7 @@ uint8_t WaspLoRaWAN::getRadioSF()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -4122,15 +4337,15 @@ uint8_t WaspLoRaWAN::getRadioSF()
 
 
 /*!
- * 
+ *
  * @brief	This function sets tx power for radio mode
- * 	
+ *
  * @param 	uint8_t pwr: power to be set [-3..15]
- * 	
- * @return		 
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  *	@arg	'7' if input parameter error
  *	@arg	'8' unrecognized module
  */
@@ -4139,26 +4354,26 @@ uint8_t WaspLoRaWAN::setRadioPower(int8_t pwr)
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	// create "radio set pwr" command
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	switch (_version)
 	{
 		case RN2483_MODULE:
 				if ((pwr < -3) || (pwr > 15)) return LORAWAN_INPUT_ERROR;
 				break;
-				
+
 		case RN2903_MODULE:
 				if ((pwr < 2) || (pwr > 20)) return LORAWAN_INPUT_ERROR;
 				break;
-				
+
 		default:
-				return LORAWAN_VERSION_ERROR;			
+				return LORAWAN_VERSION_ERROR;
 	}
-	
+
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[45])),pwr);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
@@ -4167,7 +4382,7 @@ uint8_t WaspLoRaWAN::setRadioPower(int8_t pwr)
 
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		_radioPower = pwr;
@@ -4186,10 +4401,10 @@ uint8_t WaspLoRaWAN::setRadioPower(int8_t pwr)
 
 /*!
  * @brief	This function gets the operating radio power from module
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getRadioPower()
@@ -4197,21 +4412,21 @@ uint8_t WaspLoRaWAN::getRadioPower()
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "radio get pwr" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[58])));
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		_radioPower = parseIntValue();
@@ -4221,7 +4436,7 @@ uint8_t WaspLoRaWAN::getRadioPower()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -4230,12 +4445,12 @@ uint8_t WaspLoRaWAN::getRadioPower()
 
 /*!
  * @brief	This function sets the operating mode for transceiver use
- * 	
+ *
  * @param	char* mode: "lora"/"fsk"
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::setRadioMode(char* mode)
@@ -4243,32 +4458,32 @@ uint8_t WaspLoRaWAN::setRadioMode(char* mode)
 	uint8_t status;
 	char ans1[50];
 	char ans2[50];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "radio set mod" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[43])),mode);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,300);
-	
+
 	if (status == 1)
 	{
 		memset(_radioMode, 0x00, sizeof(_radioMode));
 		strncpy(_radioMode,mode,sizeof(_radioMode));
-		return LORAWAN_ANSWER_OK;		
+		return LORAWAN_ANSWER_OK;
 	}
 	else if (status == 2)
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -4278,10 +4493,10 @@ uint8_t WaspLoRaWAN::setRadioMode(char* mode)
 
 /*!
  * @brief	This function gets the operating radio mode from module
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getRadioMode()
@@ -4289,21 +4504,21 @@ uint8_t WaspLoRaWAN::getRadioMode()
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "radio get mod" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[56])));
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		memset(_radioMode,0x00,sizeof(_radioMode));
@@ -4314,7 +4529,7 @@ uint8_t WaspLoRaWAN::getRadioMode()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -4323,13 +4538,13 @@ uint8_t WaspLoRaWAN::getRadioMode()
 
 /*!
  * @brief	This function sets the operating frequency for transceiver use
- * 	
+ *
  * @param	uint32_t freq: operating frequency [863250000..869750000] (RN2483)
  * 											   [433250000..434550000]
  * 			uint32_t freq: operating frequency [923550000..927250000] (RN2903)
- * @return	
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  *	@arg	'7' if input parameter error
  *	@arg	'8' unrecognized module
@@ -4339,37 +4554,37 @@ uint8_t WaspLoRaWAN::setRadioFreq(uint32_t freq)
 	uint8_t status;
 	char ans1[50];
 	char ans2[50];
-	
+
 	switch (_version)
 	{
 		case RN2483_MODULE:
 				if (freq < 433250000) return LORAWAN_INPUT_ERROR;
 				if ((freq > 434550000)&&(freq < 863250000)) return LORAWAN_INPUT_ERROR;
-				if (freq > 869750000) return LORAWAN_INPUT_ERROR;	
+				if (freq > 869750000) return LORAWAN_INPUT_ERROR;
 				break;
-				
+
 		case RN2903_MODULE:
 				if ((freq < 902250000)||(freq > 927750000)) return LORAWAN_INPUT_ERROR;
 				break;
-				
+
 		default:
-				return LORAWAN_VERSION_ERROR;			
+				return LORAWAN_VERSION_ERROR;
 	}
-		
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "radio set freq" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[44])),freq);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		_radioFreq = freq;
@@ -4379,7 +4594,7 @@ uint8_t WaspLoRaWAN::setRadioFreq(uint32_t freq)
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -4390,10 +4605,10 @@ uint8_t WaspLoRaWAN::setRadioFreq(uint32_t freq)
 
 /*!
  * @brief	This function gets the operating radio frequency from module
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getRadioFreq()
@@ -4401,20 +4616,20 @@ uint8_t WaspLoRaWAN::getRadioFreq()
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
-	
+
 	// create "radio get freq" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[57])));
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		_radioFreq = parseIntValue();
@@ -4424,7 +4639,7 @@ uint8_t WaspLoRaWAN::getRadioFreq()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -4433,13 +4648,13 @@ uint8_t WaspLoRaWAN::getRadioFreq()
 
 /*!
  * @brief	This function sets the signal bandwidth for receiver use
- * 	
+ *
  * @param	float bandwidth: [250,125,62.5,31.3,15.6,7.8,3.9,200,100,50,25,
  * 							  12.5,6.3,3.1,166.7,83.3,41.7,20.8,10.4,5.2,2.6]
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::setRadioReceivingBW(float bandwidth)
@@ -4459,12 +4674,12 @@ uint8_t WaspLoRaWAN::setRadioReceivingBW(float bandwidth)
 	memset(decimal,0x00,sizeof(decimal));
 
 	dtostrf (bandwidth,NULL,1,bandw);
-	
+
 	char* pch = strtok(bandw,".\r\n");
 	snprintf(integer, sizeof(integer), "%s",pch);
 	pch = strtok(NULL,"\r\n");
 	snprintf(decimal, sizeof(decimal), "%s",pch);
-	
+
 	if (decimal == "0")
 	{
 		// create "radio set rxbw" command
@@ -4473,23 +4688,23 @@ uint8_t WaspLoRaWAN::setRadioReceivingBW(float bandwidth)
 		sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 		// create "invalid_param" answer
 		sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-		
+
 		//send command and wait for ans
 		status = sendCommand(_command,ans1,ans2,500);
 	}
 	else
-	{	
+	{
 		// create "radio set rxbw" command
 		sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[48])),integer,decimal);
 		// create "ok" answer
 		sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 		// create "invalid_param" answer
 		sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-		
+
 		//send command and wait for ans
 		status = sendCommand(_command,ans1,ans2,500);
 	}
-		
+
 	if (status == 1)
 	{
 		_radioRxBW = bandwidth;
@@ -4499,7 +4714,7 @@ uint8_t WaspLoRaWAN::setRadioReceivingBW(float bandwidth)
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -4509,10 +4724,10 @@ uint8_t WaspLoRaWAN::setRadioReceivingBW(float bandwidth)
 
 /*!
  * @brief	This function gets the operating receiving bandwidth from module
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getRadioReceivingBW()
@@ -4520,21 +4735,21 @@ uint8_t WaspLoRaWAN::getRadioReceivingBW()
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "radio get rxbw" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[60])));
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		_radioRxBW = parseFloatValue();
@@ -4544,7 +4759,7 @@ uint8_t WaspLoRaWAN::getRadioReceivingBW()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -4554,12 +4769,12 @@ uint8_t WaspLoRaWAN::getRadioReceivingBW()
 
 /*!
  * @brief	This function sets the FSK bit rate value for transceiver use
- * 	
+ *
  * @param	uint16_t bitrate: [0..65535]
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  * 	@arg	'7' if input parameter error
  */
@@ -4568,24 +4783,24 @@ uint8_t WaspLoRaWAN::setRadioBitRateFSK(uint32_t bitrate)
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	//check bit rate
 	if ((bitrate > 300000)&&(bitrate < 1)) return LORAWAN_INPUT_ERROR;
-	
+
 	// create "radio set bitrate" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[49])),bitrate);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		_radioBitRate = bitrate;
@@ -4606,10 +4821,10 @@ uint8_t WaspLoRaWAN::setRadioBitRateFSK(uint32_t bitrate)
 
 /*!
  * @brief	This function gets the bit rate for FSK modulation from module
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getRadioBitRateFSK()
@@ -4617,21 +4832,21 @@ uint8_t WaspLoRaWAN::getRadioBitRateFSK()
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "radio get bitrate" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[61])));
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		_radioBitRate = parseIntValue();
@@ -4641,7 +4856,7 @@ uint8_t WaspLoRaWAN::getRadioBitRateFSK()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -4650,12 +4865,12 @@ uint8_t WaspLoRaWAN::getRadioBitRateFSK()
 
 /*!
  * @brief	This function sets the frequency deviation for transceiver use
- * 	
+ *
  * @param	uint16_t freqdeviation: [0..65535]
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  * 	@arg	'7' if input parameter error
  */
@@ -4664,14 +4879,14 @@ uint8_t WaspLoRaWAN::setRadioFreqDeviation(uint32_t freqdeviation)
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	//check freqdeviation
 	if (freqdeviation > 200000) return LORAWAN_INPUT_ERROR;
-	
+
 	// create "radio set fdev" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[50])),freqdeviation);
 	// create "ok" answer
@@ -4681,7 +4896,7 @@ uint8_t WaspLoRaWAN::setRadioFreqDeviation(uint32_t freqdeviation)
 
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		_radioFreqDev = freqdeviation;
@@ -4691,7 +4906,7 @@ uint8_t WaspLoRaWAN::setRadioFreqDeviation(uint32_t freqdeviation)
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -4699,10 +4914,10 @@ uint8_t WaspLoRaWAN::setRadioFreqDeviation(uint32_t freqdeviation)
 
 /*!
  * @brief	This function gets the frequency deviation from the module
- * 	
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getRadioFreqDeviation()
@@ -4710,21 +4925,21 @@ uint8_t WaspLoRaWAN::getRadioFreqDeviation()
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "radio get fdev" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[71])));
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		_radioFreqDev = parseIntValue();
@@ -4734,7 +4949,7 @@ uint8_t WaspLoRaWAN::getRadioFreqDeviation()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -4744,12 +4959,12 @@ uint8_t WaspLoRaWAN::getRadioFreqDeviation()
 
 /*!
  * @brief	This function sets the CRC header state for transceiver use
- * 	
+ *
  * @param	uint16_t state: "on"/"off"
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::setRadioCRC(char* state)
@@ -4757,29 +4972,29 @@ uint8_t WaspLoRaWAN::setRadioCRC(char* state)
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "radio set crc" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[52])),state);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		if (state == ans1) _crcStatus = true;
 		else _crcStatus = false;
-		
+
 		return LORAWAN_ANSWER_OK;
 	}
-	else if (status == 2) 
+	else if (status == 2)
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
@@ -4791,10 +5006,10 @@ uint8_t WaspLoRaWAN::setRadioCRC(char* state)
 
 /*!
  * @brief	This function gets the CRC header state from module
- * 	
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getRadioCRC()
@@ -4803,12 +5018,12 @@ uint8_t WaspLoRaWAN::getRadioCRC()
 	char ans1[15];
 	char ans2[15];
 	char ans3[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
 	memset(ans3,0x00,sizeof(ans3));
-	
+
 	// create "radio get crc" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[66])));
 	// create "on" anwser
@@ -4817,10 +5032,10 @@ uint8_t WaspLoRaWAN::getRadioCRC()
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[10])));
 	// create "invalid_param" answer
 	sprintf_P(ans3,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,ans3,500);
-	
+
 	if (status == 1)
 	{
 		_crcStatus = true;
@@ -4845,12 +5060,12 @@ uint8_t WaspLoRaWAN::getRadioCRC()
 
 /*!
  * @brief	This function sets the preamble length for transceiver use
- * 	
+ *
  * @param	uint16_t length: preamble length [0..65535]
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::setRadioPreamble(uint16_t length)
@@ -4858,21 +5073,21 @@ uint8_t WaspLoRaWAN::setRadioPreamble(uint16_t length)
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "radio set prlen" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[51])),length);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		_preambleLength = length;
@@ -4882,7 +5097,7 @@ uint8_t WaspLoRaWAN::setRadioPreamble(uint16_t length)
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -4892,10 +5107,10 @@ uint8_t WaspLoRaWAN::setRadioPreamble(uint16_t length)
 
 /*!
  * @brief	This function gets the preamble length from module
- * 	
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getRadioPreamble()
@@ -4903,21 +5118,21 @@ uint8_t WaspLoRaWAN::getRadioPreamble()
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "radio get prlen" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[67])));
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		_preambleLength = parseIntValue();
@@ -4927,7 +5142,7 @@ uint8_t WaspLoRaWAN::getRadioPreamble()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -4938,12 +5153,12 @@ uint8_t WaspLoRaWAN::getRadioPreamble()
 
 /*!
  * @brief	This function sets the coding rate for transceiver use
- * 	
+ *
  * @param	char* codingrate: "4/5","4/6","4/7","4/8"
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::setRadioCR(char* codingrate)
@@ -4951,21 +5166,21 @@ uint8_t WaspLoRaWAN::setRadioCR(char* codingrate)
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "radio set cr" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[53])),codingrate);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		memset(_radioCR, 0x00, sizeof(_radioCR));
@@ -4986,10 +5201,10 @@ uint8_t WaspLoRaWAN::setRadioCR(char* codingrate)
 
 /*!
  * @brief	This function gets the operating coding rate from module
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getRadioCR()
@@ -4997,21 +5212,21 @@ uint8_t WaspLoRaWAN::getRadioCR()
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-		
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "radio get cr" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[62])));
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,100);
-	
+
 	if (status == 1)
 	{
 		char* pch = strtok((char*)_buffer,ans1);
@@ -5030,7 +5245,7 @@ uint8_t WaspLoRaWAN::getRadioCR()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -5040,12 +5255,12 @@ uint8_t WaspLoRaWAN::getRadioCR()
 
 /*!
  * @brief	This function sets the time for the radio watch dog timer
- * 	
+ *
  * @param	uint32_t time: [0..4294967295] time in milliseconds
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::setRadioWDT(uint32_t time)
@@ -5053,21 +5268,21 @@ uint8_t WaspLoRaWAN::setRadioWDT(uint32_t time)
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "radio set wdt" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[54])),time);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		_radioWDT = time;
@@ -5077,7 +5292,7 @@ uint8_t WaspLoRaWAN::setRadioWDT(uint32_t time)
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -5087,10 +5302,10 @@ uint8_t WaspLoRaWAN::setRadioWDT(uint32_t time)
 
 /*!
  * @brief	This function gets the watch dog timer's time from module
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getRadioWDT()
@@ -5098,21 +5313,21 @@ uint8_t WaspLoRaWAN::getRadioWDT()
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "radio get wdt" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[63])));
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		_radioWDT = parseIntValue();
@@ -5122,7 +5337,7 @@ uint8_t WaspLoRaWAN::getRadioWDT()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -5132,12 +5347,12 @@ uint8_t WaspLoRaWAN::getRadioWDT()
 
 /*!
  * @brief	This function sets the bandwidth for transceiver use
- * 	
+ *
  * @param	uint16_t bandwitdh: 125,250,500
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  * 	@arg 	'7' if input parameter error
  */
@@ -5146,15 +5361,15 @@ uint8_t WaspLoRaWAN::setRadioBW(uint16_t bandwidth)
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	//check bandwidth
 	if ((bandwidth == 125) || (bandwidth == 250) || (bandwidth == 500)){}
 	else return LORAWAN_INPUT_ERROR;
-	
+
 	// create "radio set bw" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[55])),bandwidth);
 	// create "ok" answer
@@ -5164,7 +5379,7 @@ uint8_t WaspLoRaWAN::setRadioBW(uint16_t bandwidth)
 
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		_radioBW = bandwidth;
@@ -5174,7 +5389,7 @@ uint8_t WaspLoRaWAN::setRadioBW(uint16_t bandwidth)
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -5185,10 +5400,10 @@ uint8_t WaspLoRaWAN::setRadioBW(uint16_t bandwidth)
 
 /*!
  * @brief	This function gets the operating radio bandwidth from module
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getRadioBW()
@@ -5196,21 +5411,21 @@ uint8_t WaspLoRaWAN::getRadioBW()
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "radio get bw" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[64])));
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		_radioBW = parseIntValue();
@@ -5220,7 +5435,7 @@ uint8_t WaspLoRaWAN::getRadioBW()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
@@ -5228,19 +5443,19 @@ uint8_t WaspLoRaWAN::getRadioBW()
 
 
 /*!
- * @brief	This function sets data rate and frequency used for the 
+ * @brief	This function sets data rate and frequency used for the
  * 			second receive window.
- * 
+ *
  * @remarks	The configuration of the receive window parameters should
  * 			be in concordance with the server configuration
- * 
+ *
  * @param	uint8_t datarate: datarate to be set [0..5]
  * 			uint32_t frequency: frequency to be set [863000000..870000000]
- * 													[433050000..434790000] 
- * 
- * @return	
+ * 													[433050000..434790000]
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  *	@arg	'7' if input parameter error
  *	@arg	'8' unrecognized module
@@ -5251,42 +5466,42 @@ uint8_t WaspLoRaWAN::setRX2Parameters(uint8_t datarate, uint32_t frequency)
 	float dutycycle;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	switch (_version)
 	{
 		case RN2483_MODULE:
 				if (datarate > 7) return LORAWAN_INPUT_ERROR;
 				if (frequency < 433250000) return LORAWAN_INPUT_ERROR;
 				if ((frequency > 434550000)&&(frequency < 863250000)) return LORAWAN_INPUT_ERROR;
-				if (frequency > 869750000) return LORAWAN_INPUT_ERROR;	
+				if (frequency > 869750000) return LORAWAN_INPUT_ERROR;
 				break;
-				
+
 		case RN2903_MODULE:
 				if ((datarate > 13) || (datarate < 8))
 				{
 					return LORAWAN_INPUT_ERROR;
-				}			
+				}
 				if ((frequency < 923550000) || (frequency > 927250000)) return LORAWAN_INPUT_ERROR;
 				break;
-				
+
 		default:
-				return LORAWAN_VERSION_ERROR;			
+				return LORAWAN_VERSION_ERROR;
 	}
-	
+
 	// create "mac set rx2" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[78])),datarate,frequency);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2);
-	
+
 	if (status == 1)
 	{
 		_rx2DataRate = datarate;
@@ -5306,16 +5521,16 @@ uint8_t WaspLoRaWAN::setRX2Parameters(uint8_t datarate, uint32_t frequency)
 
 /*!
  * @brief	This function sets the delay used for the first receive window
- * 
+ *
  * @param	uint16_t delay: delay to be set [0..65535]
- * 
- * @remarks	The "dcycle" value that needs to be configured can be obtained 
+ *
+ * @remarks	The "dcycle" value that needs to be configured can be obtained
  * 			from the actual duty cycle X (in percentage) using the following formula:
  * 			dcycle = (100/X) – 1
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::setRX1Delay(uint16_t delay)
@@ -5324,11 +5539,11 @@ uint8_t WaspLoRaWAN::setRX1Delay(uint16_t delay)
 	float dutycycle;
 	char ans1[15];
 	char ans2[15];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "mac set rx1delay" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[79])),delay);
 	// create "ok" answer
@@ -5338,7 +5553,7 @@ uint8_t WaspLoRaWAN::setRX1Delay(uint16_t delay)
 
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2);
-	
+
 	if (status == 1)
 	{
 		_rx1Delay = delay;
@@ -5358,13 +5573,13 @@ uint8_t WaspLoRaWAN::setRX1Delay(uint16_t delay)
 
 /*!
  * @brief	This function gets MAC status from the module
- * 
- * @remarks This functino is necessary before showing MAC status with 
+ *
+ * @remarks This functino is necessary before showing MAC status with
  * 			showMACStatus() function
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::getMACStatus()
@@ -5372,11 +5587,11 @@ uint8_t WaspLoRaWAN::getMACStatus()
 	uint8_t status;
 	char ans1[15];
 	char carr[5];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(carr,0x00,sizeof(carr));
-	
+
 	// create "mac get status" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[81])));
 	// create "invalid_param" answer
@@ -5409,7 +5624,7 @@ uint8_t WaspLoRaWAN::getMACStatus()
 				return LORAWAN_ANSWER_ERROR;
 			}
 		}
-		
+
 		_macStatus = (aux[4]*(16^4))+(aux[3]*(16^3))+(aux[2]*(16^2))+(aux[1]*16)+aux[0];
 		return LORAWAN_ANSWER_OK;
 	}
@@ -5426,10 +5641,10 @@ uint8_t WaspLoRaWAN::getMACStatus()
 
 /*!
  * @brief	This function returns MAC status verbose
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::showMACStatus()
@@ -5439,58 +5654,58 @@ uint8_t WaspLoRaWAN::showMACStatus()
 
 	if (_macStatus&0x10) USB.println(F("Automatic reply status enabled"));
 	else USB.println(F("Automatic reply status disabled"));
-	
+
 	if (_macStatus&0x20) USB.println(F("ADR status enabled"));
 	else USB.println(F("ADR status disabled"));
-	
+
 	if (_macStatus&0x40) USB.println(F("Silent inmediately status enabled"));
 	else USB.println(F("Silent inmediately status disabled"));
-	
+
 	if (_macStatus&0x80) USB.println(F("MAC paused"));
 	else USB.println(F("MAC not paused"));
-	
+
 	if (_macStatus&0x200) USB.println(F("Link check status enabled"));
 	else USB.println(F("Link check status disabled"));
-	
+
 	if (_macStatus&0x400) USB.println(F("Channels updated via NewChannelReq or CFList"));
 	else USB.println(F("Channels not updated"));
-	
+
 	if (_macStatus&0x800) USB.println(F("Output power updated"));
 	else USB.println(F("Output power not updated"));
-	
+
 	if (_macStatus&0x1000) USB.println(F("Number of repetitions updated"));
 	else USB.println(F("Number of repetitions not updated"));
-	
+
 	if (_macStatus&=0x2000) USB.println(F("Prescaler updated"));
 	else USB.println(F("Prescaler not updated"));
-	
+
 	if (_macStatus&=0x4000) USB.println(F("RX2 window parameter updated"));
 	else USB.println(F("RX2 window not updated"));
-	
+
 	if (_macStatus&=0x8000) USB.println(F("TX timing updated"));
 	else USB.println(F("TX timing not updated"));
-	
+
 	if (_macStatus&=0x10000) USB.println(F("Rejoin needed"));
 	else USB.println(F("End device functional"));
-	
+
 }
 
 void WaspLoRaWAN::convertString(char* string2convert, char* outputString)
-{	
+{
 	Utils.hex2str((uint8_t*)string2convert, outputString, strlen(string2convert));
 }
 
 void WaspLoRaWAN::convertString(uint8_t* string2convert, char* outputString)
-{	
+{
 	Utils.hex2str(string2convert, outputString, strlen((char*)string2convert));
 }
 
 /*!
  * @brief	This function puts the module to sleep
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::sleep()
@@ -5500,27 +5715,27 @@ uint8_t WaspLoRaWAN::sleep()
 
 /*!
  * @brief	This function puts the module to sleep
- * 
+ *
  * @param	uint32_t time: 100..4294967295
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::sleep(uint32_t time)
 {
 	uint8_t status;
 	char ans1[25];
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
-	
+
 	// create "mac get status" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[84])),time);
 	// create "invalid_param" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,1000);
 
@@ -5533,10 +5748,10 @@ uint8_t WaspLoRaWAN::sleep(uint32_t time)
 
 /*!
  * @brief	This function force the module to wake up
- * 
- * @return	
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
 uint8_t WaspLoRaWAN::wakeUp()
@@ -5545,20 +5760,20 @@ uint8_t WaspLoRaWAN::wakeUp()
 	char ans1[25];
 
 	memset(ans1,0x00,sizeof(ans1));
-	
+
 	beginUART();
-  	
+
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
-	
+
 	printByte(0x00,_uart);
 	printByte(0x55,_uart);
 
 	delay(500);
-	
+
 	sleep(100);
 	status = waitFor(ans1,500);
-	
+
 	if (status == 1)
 	{
 		return LORAWAN_ANSWER_OK;
@@ -5570,15 +5785,15 @@ uint8_t WaspLoRaWAN::wakeUp()
 }
 
 
-/*! 
+/*!
  * @brief	This function is used to set the automatic reply status from module
- * 
+ *
  * @param	char* state: "on"/"off"
- * 
- * @return		
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  *  @arg	'7' if input parameter error
  */
 uint8_t WaspLoRaWAN::setAR(char* state)
@@ -5589,25 +5804,25 @@ uint8_t WaspLoRaWAN::setAR(char* state)
 
 	// check state
 	if ((strcmp(state, "on")) && (strcmp(state, "off"))) return LORAWAN_INPUT_ERROR;
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "mac set ar" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[85])),state);
 	// create "ok" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[0])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-		
+
 	if (status == 1)
 	{
 		if (strcmp(state, "on")  == 0) _ar = true;
-		if (strcmp(state, "off") == 0) _ar = false;		
+		if (strcmp(state, "off") == 0) _ar = false;
 		return LORAWAN_ANSWER_OK;
 	}
 	else if (status == 2)
@@ -5621,15 +5836,15 @@ uint8_t WaspLoRaWAN::setAR(char* state)
 }
 
 
-/*! 
+/*!
  * @brief	This function is used to get the automatic reply status from module
- * 
+ *
  * @param	char* state: "on"/"off"
- * 
- * @return		
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  *  @arg	'7' if input parameter error
  */
 uint8_t WaspLoRaWAN::getAR()
@@ -5643,17 +5858,17 @@ uint8_t WaspLoRaWAN::getAR()
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
 	memset(ans2,0x00,sizeof(ans3));
-	
+
 	// create "mac get ar" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[86])));
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[9])));
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[10])));
 	// create "invalid_param" answer
 	sprintf_P(ans3,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,ans3,500);
-	
+
 	if (status == 1)
 	{
 		_ar = true;
@@ -5668,20 +5883,20 @@ uint8_t WaspLoRaWAN::getAR()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
 }
 
 
-/*! 
+/*!
  * @brief	This function is used to get the first receive window delay
- * 
- * @return		
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  *  @arg	'7' if input parameter error
  */
 uint8_t WaspLoRaWAN::getRX1Delay()
@@ -5693,17 +5908,17 @@ uint8_t WaspLoRaWAN::getRX1Delay()
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "mac get rxdelay1" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[87])));
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		_rx1Delay = parseIntValue();
@@ -5713,20 +5928,20 @@ uint8_t WaspLoRaWAN::getRX1Delay()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
 }
 
 
-/*! 
+/*!
  * @brief	This function is used to get the second receive window delay
- * 
- * @return		
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  *  @arg	'7' if input parameter error
  */
 uint8_t WaspLoRaWAN::getRX2Delay()
@@ -5738,17 +5953,17 @@ uint8_t WaspLoRaWAN::getRX2Delay()
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "mac get rxdelay2" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[88])));
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-	
+
 	if (status == 1)
 	{
 		_rx2Delay = parseIntValue();
@@ -5758,22 +5973,22 @@ uint8_t WaspLoRaWAN::getRX2Delay()
 	{
 		return LORAWAN_ANSWER_ERROR;
 	}
-	else 
+	else
 	{
 		return LORAWAN_NO_ANSWER;
 	}
 }
 
 
-/*! 
+/*!
  * @brief	This function is used to set the automatic reply status from module
- * 
+ *
  * @param	char* state: "on"/"off"
- * 
- * @return		
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
- * 	@arg	'2' if no answer 
+ * 	@arg	'1' if error
+ * 	@arg	'2' if no answer
  *  @arg	'7' if input parameter error
  */
 uint8_t WaspLoRaWAN::getRX2Parameters(char* band)
@@ -5784,24 +5999,24 @@ uint8_t WaspLoRaWAN::getRX2Parameters(char* band)
 
 	// check state
 	if ((strcmp(band, "868")) && (strcmp(band, "433"))) return LORAWAN_INPUT_ERROR;
-	
+
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
 	memset(ans2,0x00,sizeof(ans2));
-	
+
 	// create "mac set ar" command
 	sprintf_P(_command,(char*)pgm_read_word(&(table_LoRaWAN_COMMANDS[89])),band);
 	// create "\r\n" answer
 	sprintf_P(ans1,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
 	// create "invalid_param" answer
 	sprintf_P(ans2,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[1])));
-	
+
 	//send command and wait for ans
 	status = sendCommand(_command,ans1,ans2,500);
-		
+
 	if (status == 1)
 	{
-		char * pch;	
+		char * pch;
 		pch = strtok((char*) _buffer," \r\n");
 		if (pch != NULL)
 		{
@@ -5830,18 +6045,18 @@ uint8_t WaspLoRaWAN::getRX2Parameters(char* band)
 
 
 
-/*! 
+/*!
  * @brief	This function calculates the maximum payload for current settings
- *  
- * @return		
+ *
+ * @return
  * 	@arg	'0' if OK
- * 	@arg	'1' if error 
+ * 	@arg	'1' if error
  */
 uint8_t WaspLoRaWAN::getMaxPayload()
 {
 	uint8_t error;
 	_maxPayload = 0;
-	
+
 	// get current data rate
 	error = getDataRate();
 
@@ -5851,8 +6066,8 @@ uint8_t WaspLoRaWAN::getMaxPayload()
 		{
 			switch (_dataRate)
 			{
-				case 0:	
-				case 1:	
+				case 0:
+				case 1:
 				case 2:	_maxPayload = 51;
 						break;
 				case 3: _maxPayload = 115;
@@ -5877,7 +6092,7 @@ uint8_t WaspLoRaWAN::getMaxPayload()
 						break;
 				case 2:	_maxPayload = 129;
 						break;
-				case 3: 
+				case 3:
 				case 4: _maxPayload = 242;
 						break;
 				default:_maxPayload = 0;
@@ -5894,7 +6109,7 @@ uint8_t WaspLoRaWAN::getMaxPayload()
 	{
 		return 1;
 	}
-	
+
 	return 0;
 }
 
@@ -5903,12 +6118,12 @@ uint8_t WaspLoRaWAN::getMaxPayload()
 ////////////////////////////////////////////////////////////////////////////////
 
 /*!
- * @brief	This function parses a value 
+ * @brief	This function parses a value
  * @return	parsed value. '0' if nothing to parse
  */
 uint32_t WaspLoRaWAN::parseValue(uint8_t base)
 {
-	char * pch;	
+	char * pch;
 	pch = strtok((char*) _buffer," \r\n");
 	if (pch != NULL)
 	{
@@ -5918,19 +6133,19 @@ uint32_t WaspLoRaWAN::parseValue(uint8_t base)
 }
 
 
-/*! 
- * @brief	This function parses a int value 
+/*!
+ * @brief	This function parses a int value
  * @return	parsed value. '0' if nothing to parse
- */			
+ */
 uint32_t WaspLoRaWAN::parseIntValue()
 {
-	char * pch;	
+	char * pch;
 	char carr[5];
-	
+
 	memset(carr,0x00,sizeof(carr));
 	// create "\r\n" answer
 	sprintf_P(carr,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
-	
+
 	pch = strtok((char*) _buffer,carr);
 	if (pch != NULL)
 	{
@@ -5940,19 +6155,19 @@ uint32_t WaspLoRaWAN::parseIntValue()
 }
 
 
-/*! 
+/*!
  * @brief	This function parses a float value
  * @return	parsed value. '0' if nothing to parse
  */
 float WaspLoRaWAN::parseFloatValue()
 {
-	char * pch;	
+	char * pch;
 	char carr[5];
-	
+
 	memset(carr,0x00,sizeof(carr));
 	// create "\r\n" answer
 	sprintf_P(carr,(char*)pgm_read_word(&(table_LoRaWAN_ANSWERS[13])));
-	
+
 	pch = strtok((char*) _buffer,carr);
 	if (pch != NULL)
 	{

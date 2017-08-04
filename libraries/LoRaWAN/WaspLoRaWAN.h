@@ -1,22 +1,22 @@
 /*! \file 	WaspLoRaWAN.h
     \brief 	Library for managing the LoRaWAN module
-    
+
     Copyright (C) 2016 Libelium Comunicaciones Distribuidas S.L.
     http://www.libelium.com
- 
+
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation, either version 2.1 of the License, or
     (at your option) any later version.
-   
+
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Lesser General Public License for more details.
-  
+
     You should have received a copy of the GNU Lesser General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-  
+
     Version:		3.1
     Design:			David Gascón
     Implementation:	Luis Miguel Martí
@@ -35,6 +35,7 @@
 /******************************************************************************
  * Definitions & Declarations
  ******************************************************************************/
+#define RN2483_debug_mode 1
 
 /*! @enum AnswerTypesLoRaWAN
  * API answer messages
@@ -61,6 +62,49 @@ enum ModuleTypersLoRaWAN
 	RN2903_MODULE = 2,
 };
 
+
+const uint8_t MAX_PAYLOAD = 251;
+const uint8_t ACK_LENGTH = 5;
+const uint8_t BROADCAST_0 = 0x00;
+const uint8_t CORRECT_PACKET = 0;
+const uint8_t INCORRECT_PACKET = 1;
+
+//! Structure :
+/*!
+ */
+struct pack
+{
+	//! Structure Variable : Packet destination
+	/*!
+ 	*/
+	uint8_t dst;
+
+	//! Structure Variable : Packet source
+	/*!
+ 	*/
+	uint8_t src;
+
+	//! Structure Variable : Packet number
+	/*!
+ 	*/
+	uint8_t packnum;
+
+	//! Structure Variable : Packet length
+	/*!
+ 	*/
+	uint8_t length;
+
+	//! Structure Variable : Packet payload
+	/*!
+ 	*/
+	uint8_t data[MAX_PAYLOAD];
+
+	//! Structure Variable : Retry number
+	/*!
+ 	*/
+	uint8_t retry;
+};
+
 /******************************************************************************
  * Class
  ******************************************************************************/
@@ -69,10 +113,10 @@ class WaspLoRaWAN : public WaspUART
 	// private methods //////////////////////////
 	private:
 		char _command[250];
-    	
+
 	// public methods //////////////////////////
     public:
-    
+
 		bool _adr;
 		bool _ar;
 		char _eui[17];
@@ -120,22 +164,52 @@ class WaspLoRaWAN : public WaspUART
 		uint8_t _version;
 		uint32_t _macStatus;
 		uint8_t _maxPayload;
-		
+
+		//! Variable : array with all the information about a received packet.
+		//!
+	  	/*!
+	   	*/
+		pack packet_received;
+
+		//! Variable : array with all the information about a sent/received ack.
+		//!
+	  	/*!
+	   	*/
+		pack ACK;
+
+		//! Variable : node address.
+		//!
+	  	/*!
+	   	*/
+		uint8_t _nodeAddress;
+
+		//! Variable : packet destination.
+		//!
+	  	/*!
+	   	*/
+		uint8_t _destination;
+
+		//! Variable : indicates if received packet is correct or incorrect.
+		//!
+	  	/*!
+	   	*/
+	   	uint8_t _reception;
+
 		// constructor
 		WaspLoRaWAN() {};
-		
+
 		// System functions
-		uint8_t ON(uint8_t socket);	
+		uint8_t ON(uint8_t socket);
 		uint8_t OFF(uint8_t socket);
-		uint8_t reset();				
-		uint8_t factoryReset();		
-		uint8_t getEUI();		
-		uint8_t getAddr();		
+		uint8_t reset();
+		uint8_t factoryReset();
+		uint8_t getEUI();
+		uint8_t getAddr();
 		uint8_t getSupplyPower();
 		uint8_t check();
-		
-		
-		// LoRaWAN functions				
+
+
+		// LoRaWAN functions
 		uint8_t resetMacConfig(char* band);
 		uint8_t setDeviceEUI();
 		uint8_t setDeviceEUI(char* eui);
@@ -176,17 +250,20 @@ class WaspLoRaWAN : public WaspUART
 		uint8_t getMargin();
 		uint8_t getGatewayNumber();
 		uint8_t setUpCounter(uint32_t counter);
-		uint8_t getUpCounter();		
+		uint8_t getUpCounter();
 		uint8_t setDownCounter(uint32_t counter);
 		uint8_t getDownCounter();
 		uint8_t setRX2Parameters(uint8_t datarate, uint32_t frequency);
 		uint8_t setRX1Delay(uint16_t delay);
 		uint8_t getMACStatus();
 		uint8_t showMACStatus();
-				
+
 		// Radio functions
 		uint8_t sendRadio(char * buff);
 		uint8_t receiveRadio(uint32_t timeout);
+		uint8_t receiveRadioACK(uint32_t timeout);
+		int8_t setNodeAddress(uint8_t addr);
+		uint8_t setACK();
 		uint8_t test_ON();
 		uint8_t test_OFF();
 		uint8_t getRadioSNR();
@@ -229,13 +306,13 @@ class WaspLoRaWAN : public WaspUART
 		uint8_t getRX2Parameters(char* band);
 		uint8_t getMaxPayload();
 
-	private:		
+	private:
 		// Utils
 		uint32_t parseValue(uint8_t base);
-		uint32_t parseIntValue();		
+		uint32_t parseIntValue();
 		float parseFloatValue();
-		
-		
+
+
 };
 
 extern WaspLoRaWAN LoRaWAN;
