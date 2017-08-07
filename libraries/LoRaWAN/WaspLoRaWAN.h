@@ -219,11 +219,7 @@ class WaspLoRaWAN : public WaspUART
 		*/
 		uint8_t _maxRetries;
 
-		//! Variable : Buffer to send ACK messages
-		//!
-		/*!
-		*/
-		char sendACKMessage[ACK_LENGTH];
+		
 
 		// constructor
 		WaspLoRaWAN() {};

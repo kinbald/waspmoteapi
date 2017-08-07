@@ -3825,8 +3825,8 @@ uint8_t WaspLoRaWAN::sendPacketTimeout(	uint8_t dest,
 		state_f = setPacket(dest, message);	// Setting a packet with 'dest' destination
     message[0] = packet_sent.dst;
     message[1] = packet_sent.src;
-    message[2] = packet_sent.length;
-    message[3] = packet_sent.packnum;	// Setting packet number in packet structure
+    message[3] = packet_sent.length;
+    message[2] = packet_sent.packnum;	// Setting packet number in packet structure
     for(unsigned int i = 0; i < length16; i++)
     {
       message[i+4] = packet_sent.data[i];
@@ -4008,7 +4008,7 @@ uint8_t WaspLoRaWAN::setPacket(uint8_t dest, uint8_t *payload)
 uint8_t WaspLoRaWAN::getACK()
 {
   uint8_t state = 2;
-  uint8_t receiveMessage[251];
+  uint8_t receiveMessage[MAX_PAYLOAD];
 
   #if (RN2483_debug_mode > 1)
   USB.println();
@@ -4018,8 +4018,8 @@ uint8_t WaspLoRaWAN::getACK()
   // Storing the received ACK
   ACK.dst = receiveMessage[0];
   ACK.src = receiveMessage[1];
-  ACK.length = receiveMessage[2];
-  ACK.packnum = receiveMessage[3];
+  ACK.length = receiveMessage[3];
+  ACK.packnum = receiveMessage[2];
   ACK.data[0] = receiveMessage[4];
   _destination = ACK.dst;
 
@@ -4196,6 +4196,11 @@ uint8_t WaspLoRaWAN::receiveRadio(uint32_t timeout)
    char ans3[15];
    uint8_t receiveMessage[MAX_PAYLOAD];
    uint8_t message[ACK_LENGTH];
+   //! Variable : Buffer to send ACK messages
+   //!
+   /*!
+   */
+   char sendACKMessage[ACK_LENGTH];
 
    //set watch dog radio to timeout
    error = setRadioWDT(timeout);
@@ -4244,8 +4249,8 @@ uint8_t WaspLoRaWAN::receiveRadio(uint32_t timeout)
 
          packet_received.dst = receiveMessage[0];
          packet_received.src = receiveMessage[1];
-         packet_received.length = receiveMessage[2];
-         packet_received.packnum = receiveMessage[3];
+         packet_received.length = receiveMessage[3];
+         packet_received.packnum = receiveMessage[2];
          for(unsigned int i = 0; i < packet_received.length; i++)
          {
            packet_received.data[i] = receiveMessage[i+4];
@@ -4281,8 +4286,8 @@ uint8_t WaspLoRaWAN::receiveRadio(uint32_t timeout)
          {
            message[0] = ACK.dst;
            message[1] = ACK.src;
-           message[2] = ACK.length;
-           message[3] = ACK.packnum;
+           message[3] = ACK.length;
+           message[2] = ACK.packnum;
            message[4] = ACK.data[0];
 
            Utils.hex2str(message, sendACKMessage, sizeof(sendACKMessage));
