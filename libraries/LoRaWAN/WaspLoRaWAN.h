@@ -35,7 +35,7 @@
 /******************************************************************************
  * Definitions & Declarations
  ******************************************************************************/
-#define RN2483_debug_mode 1
+#define RN2483_debug_mode 0
 
 /*! @enum AnswerTypesLoRaWAN
  * API answer messages
@@ -219,7 +219,7 @@ class WaspLoRaWAN : public WaspUART
 		*/
 		uint8_t _maxRetries;
 
-		
+
 
 		// constructor
 		WaspLoRaWAN() {};
@@ -286,10 +286,10 @@ class WaspLoRaWAN : public WaspUART
 
 		// Radio functions
 		uint8_t sendRadio(char * buff);
-		uint8_t sendPacketTimeout(uint8_t dest, char *payload, uint16_t length16);
+		uint8_t sendPacketTimeout(uint8_t dest, uint8_t *payload, uint16_t length16);
 		uint8_t truncPayload(uint16_t length16);
-		uint8_t sendPacketTimeoutACK(uint8_t dest, char *payload, uint16_t length16, uint32_t wait);
-		uint8_t sendPacketTimeoutACKRetries(uint8_t dest, char *payload, uint16_t length16, uint32_t wait);
+		uint8_t sendPacketTimeoutACK(uint8_t dest, uint8_t *payload, uint16_t length16, uint32_t wait);
+		uint8_t sendPacketTimeoutACKRetries(uint8_t dest, uint8_t *payload, uint16_t length16, uint32_t wait);
 		uint8_t setPacket(uint8_t dest, uint8_t *payload);
 		uint8_t getACK();
 		uint8_t receiveRadio(uint32_t timeout);

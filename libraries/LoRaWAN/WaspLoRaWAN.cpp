@@ -3803,49 +3803,6 @@ uint8_t WaspLoRaWAN::sendRadio(char * message)
 }
 
 /*
- Function: Configures the module to transmit information.
- Returns: Integer that determines if there has been any error
-   state = 2  --> The command has not been executed
-   state = 1  --> There has been an error while executing the command
-   state = 0  --> The command has been executed with no errors
-*/
-uint8_t WaspLoRaWAN::sendPacketTimeout(	uint8_t dest,
-										char *payload,
-										uint16_t length16)
-{
-	uint8_t state = 2;
-	uint8_t state_f = 2;
-  uint8_t message[MAX_PAYLOAD];
-  char sendMessage[MAX_PAYLOAD];
-
-	state = truncPayload(length16);
-	if( state == 0 )
-	{
-    Utils.str2hex(payload, message, 4+length16);
-		state_f = setPacket(dest, message);	// Setting a packet with 'dest' destination
-    message[0] = packet_sent.dst;
-    message[1] = packet_sent.src;
-    message[3] = packet_sent.length;
-    message[2] = packet_sent.packnum;	// Setting packet number in packet structure
-    for(unsigned int i = 0; i < length16; i++)
-    {
-      message[i+4] = packet_sent.data[i];
-    }
-    message[4+length16] = packet_sent.retry;
-    Utils.hex2str(message, sendMessage, 4+length16);
-	}
-	else
-	{
-		state_f = state;
-	}
-	if( state_f == 0 )
-	{
-		state_f = sendRadio(sendMessage);	// Sending the packet
-	}
-	return state_f;
-}
-
-/*
  Function: It truncs the payload length if it is greater than 0xFF.
  Returns: Integer that determines if there has been any error
    state = 1  --> There has been an error while executing the command
@@ -3867,6 +3824,94 @@ uint8_t WaspLoRaWAN::truncPayload(uint16_t length16)
 }
 
 /*
+ Function: It sets a packet struct in order to send it.
+ Returns:  Integer that determines if there has been any error
+   state = 2  --> The command has not been executed
+   state = 1  --> There has been an error while executing the command
+   state = 0  --> The command has been executed with no errors
+*/
+uint8_t WaspLoRaWAN::setPacket(uint8_t dest, uint8_t *payload)
+{
+	int8_t state = 2;
+  uint16_t length16;
+
+	// Updating incorrect value
+	_reception = CORRECT_PACKET;
+
+	if (_retries == 0)
+	{
+		// Updating these values only if it is the first try
+		// Setting destination in packet structure
+    _destination = dest; // Storing destination in a global variable
+  	packet_sent.dst = dest;	 // Setting destination in packet structure
+  	packet_sent.src = _nodeAddress; // Setting source in packet structure
+  	packet_sent.packnum = _packetNumber;	// Setting packet number in packet structure
+  	_packetNumber++;
+    state = 0;
+  	if( state == 0 )
+  	{
+  		// fill data field until the end of the string
+  		for(unsigned int i = 0; i < _payloadlength; i++)
+  		{
+  			packet_sent.data[i] = payload[i];
+  		}
+      packet_sent.length = _payloadlength;
+  	}
+  	else
+  	{
+  		state = 1;
+  	}
+	}
+	else
+	{
+		packet_sent.retry = _retries;
+	}
+	return state;
+}
+
+/*
+ Function: Configures the module to transmit information.
+ Returns: Integer that determines if there has been any error
+   state = 2  --> The command has not been executed
+   state = 1  --> There has been an error while executing the command
+   state = 0  --> The command has been executed with no errors
+*/
+uint8_t WaspLoRaWAN::sendPacketTimeout(	uint8_t dest,
+										uint8_t *payload,
+										uint16_t length16)
+{
+	uint8_t state = 2;
+	uint8_t state_f = 2;
+  uint8_t message[MAX_PAYLOAD];
+  char sendMessage[MAX_PAYLOAD];
+
+	state = truncPayload(length16);
+	if( state == 0 )
+	{
+		state_f = setPacket(dest, payload);	// Setting a packet with 'dest' destination
+    message[0] = packet_sent.dst;
+    message[1] = packet_sent.src;
+    message[2] = packet_sent.packnum;	// Setting packet number in packet structure
+    message[3] = packet_sent.length;
+    for(unsigned int i = 0; i < _payloadlength; i++)
+    {
+      message[i+4] = packet_sent.data[i];
+    }
+    message[4+_payloadlength] = packet_sent.retry;
+    Utils.hex2str(message, sendMessage, 5+_payloadlength);
+	}
+	else
+	{
+		state_f = state;
+	}
+	if( state_f == 0 )
+	{
+		state_f = sendRadio(sendMessage);	// Sending the packet
+	}
+	return state_f;
+}
+
+/*
  Function: Configures the module to transmit information and receive an ACK.
  Returns: Integer that determines if there has been any error
    state = 9  --> The ACK lost (no data available)
@@ -3881,7 +3926,7 @@ uint8_t WaspLoRaWAN::truncPayload(uint16_t length16)
    state = 0  --> The command has been executed with no errors
 */
 uint8_t WaspLoRaWAN::sendPacketTimeoutACK(	uint8_t dest,
-											char *payload,
+											uint8_t *payload,
 											uint16_t length16, uint32_t wait)
 {
 	uint8_t state = 2;
@@ -3933,7 +3978,7 @@ uint8_t WaspLoRaWAN::sendPacketTimeoutACK(	uint8_t dest,
    state = 1  --> There has been an error while executing the command
    state = 0  --> The command has been executed with no errors
 */
-uint8_t WaspLoRaWAN::sendPacketTimeoutACKRetries(uint8_t dest, char *payload, uint16_t length16, uint32_t wait)
+uint8_t WaspLoRaWAN::sendPacketTimeoutACKRetries(uint8_t dest, uint8_t *payload, uint16_t length16, uint32_t wait)
 {
 	uint8_t state = 2;
 	// Sending packet to 'dest' destination and waiting an ACK response.
@@ -3945,53 +3990,6 @@ uint8_t WaspLoRaWAN::sendPacketTimeoutACKRetries(uint8_t dest, char *payload, ui
 	}
 	_retries = 0;
 
-	return state;
-}
-
-/*
- Function: It sets a packet struct in order to send it.
- Returns:  Integer that determines if there has been any error
-   state = 2  --> The command has not been executed
-   state = 1  --> There has been an error while executing the command
-   state = 0  --> The command has been executed with no errors
-*/
-uint8_t WaspLoRaWAN::setPacket(uint8_t dest, uint8_t *payload)
-{
-	int8_t state = 2;
-  uint16_t length16;
-
-	// Updating incorrect value
-	_reception = CORRECT_PACKET;
-
-	if (_retries == 0)
-	{
-		// Updating these values only if it is the first try
-		// Setting destination in packet structure
-    _destination = dest; // Storing destination in a global variable
-  	packet_sent.dst = dest;	 // Setting destination in packet structure
-  	packet_sent.src = _nodeAddress; // Setting source in packet structure
-  	packet_sent.packnum = _packetNumber;	// Setting packet number in packet structure
-  	_packetNumber++;
-    length16 = (uint16_t)strlen((char*)payload);
-  	state = truncPayload(length16);
-  	if( state == 0 )
-  	{
-  		// fill data field until the end of the string
-  		for(unsigned int i = 0; i < _payloadlength; i++)
-  		{
-  			packet_sent.data[i] = payload[i];
-  		}
-      packet_sent.length = length16;
-  	}
-  	else
-  	{
-  		state = 1;
-  	}
-	}
-	else
-	{
-		packet_sent.retry = _retries;
-	}
 	return state;
 }
 
@@ -4098,8 +4096,6 @@ uint8_t WaspLoRaWAN::getACK()
   return state;
 }
 
-
-
 /*!
  * @brief	Receive a packet via radio
  *
@@ -4196,10 +4192,6 @@ uint8_t WaspLoRaWAN::receiveRadio(uint32_t timeout)
    char ans3[15];
    uint8_t receiveMessage[MAX_PAYLOAD];
    uint8_t message[ACK_LENGTH];
-   //! Variable : Buffer to send ACK messages
-   //!
-   /*!
-   */
    char sendACKMessage[ACK_LENGTH];
 
    //set watch dog radio to timeout
@@ -4249,8 +4241,8 @@ uint8_t WaspLoRaWAN::receiveRadio(uint32_t timeout)
 
          packet_received.dst = receiveMessage[0];
          packet_received.src = receiveMessage[1];
-         packet_received.length = receiveMessage[3];
          packet_received.packnum = receiveMessage[2];
+         packet_received.length = receiveMessage[3];
          for(unsigned int i = 0; i < packet_received.length; i++)
          {
            packet_received.data[i] = receiveMessage[i+4];
@@ -4286,8 +4278,8 @@ uint8_t WaspLoRaWAN::receiveRadio(uint32_t timeout)
          {
            message[0] = ACK.dst;
            message[1] = ACK.src;
-           message[3] = ACK.length;
            message[2] = ACK.packnum;
+           message[3] = ACK.length;
            message[4] = ACK.data[0];
 
            Utils.hex2str(message, sendACKMessage, sizeof(sendACKMessage));
@@ -4343,6 +4335,27 @@ uint8_t WaspLoRaWAN::receiveRadio(uint32_t timeout)
  }
 
  /*
+  Function: It sets an ACK in order to send it.
+  Returns: Integer that determines if there has been any error
+    state = 0  --> The command has been executed with no errors
+ */
+ uint8_t WaspLoRaWAN::setACK()
+ {
+   uint8_t state = 2;
+   // Setting ACK
+   memset( &ACK, 0x00, sizeof(ACK) );
+   ACK.dst = packet_received.src; // ACK destination is packet source
+   ACK.src = packet_received.dst; // ACK source is packet destination
+   ACK.length = 0;		  // length = 0 to show that's an ACK
+   ACK.packnum = packet_received.packnum; // packet number that has been correctly received
+   ACK.data[0] = _reception;	// CRC of the received packet
+
+   state = 0;
+   _reception = CORRECT_PACKET;		// Updating value to next packet
+   return state;
+ }
+
+ /*
  Function: Sets the node address in the module.
  Returns: Integer that determines if there has been any error
    state = 1  --> There has been an error while executing the command
@@ -4381,27 +4394,6 @@ int8_t WaspLoRaWAN::setNodeAddress(uint8_t addr)
 		state = 0;
 	}
 	return state;
-}
-
-/*
- Function: It sets an ACK in order to send it.
- Returns: Integer that determines if there has been any error
-   state = 0  --> The command has been executed with no errors
-*/
-uint8_t WaspLoRaWAN::setACK()
-{
-  uint8_t state = 2;
-  // Setting ACK
-  memset( &ACK, 0x00, sizeof(ACK) );
-  ACK.dst = packet_received.src; // ACK destination is packet source
-  ACK.src = packet_received.dst; // ACK source is packet destination
-  ACK.length = 0;		  // length = 0 to show that's an ACK
-  ACK.packnum = packet_received.packnum; // packet number that has been correctly received
-  ACK.data[0] = _reception;	// CRC of the received packet
-
-  state = 0;
-  _reception = CORRECT_PACKET;		// Updating value to next packet
-  return state;
 }
 
 /*!
