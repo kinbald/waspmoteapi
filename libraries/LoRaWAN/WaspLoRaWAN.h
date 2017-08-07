@@ -167,33 +167,63 @@ class WaspLoRaWAN : public WaspUART
 
 		//! Variable : array with all the information about a received packet.
 		//!
-	  	/*!
-	   	*/
+		/*!
+		*/
 		pack packet_received;
 
-		//! Variable : array with all the information about a sent/received ack.
+		//! Variable : array with all the information about a sent packet.
 		//!
 	  	/*!
 	   	*/
+		pack packet_sent;
+
+		//! Variable : array with all the information about a sent/received ack.
+		//!
+		/*!
+		*/
 		pack ACK;
 
 		//! Variable : node address.
 		//!
-	  	/*!
-	   	*/
+		/*!
+		*/
 		uint8_t _nodeAddress;
 
 		//! Variable : packet destination.
 		//!
-	  	/*!
-	   	*/
+		/*!
+		*/
 		uint8_t _destination;
 
 		//! Variable : indicates if received packet is correct or incorrect.
 		//!
-	  	/*!
-	   	*/
-	   	uint8_t _reception;
+		/*!
+		*/
+		uint8_t _reception;
+
+		//! Variable : payload length sent/received.
+		//!
+		/*!
+		*/
+		uint16_t _payloadlength;
+
+		//! Variable : packet number.
+		//!
+		/*!
+		*/
+		uint8_t _packetNumber;
+
+		//! Variable : maximum number of retries.
+		//!
+		/*!
+		*/
+		uint8_t _maxRetries;
+
+		//! Variable : Buffer to send ACK messages
+		//!
+		/*!
+		*/
+		char sendACKMessage[ACK_LENGTH];
 
 		// constructor
 		WaspLoRaWAN() {};
@@ -260,6 +290,12 @@ class WaspLoRaWAN : public WaspUART
 
 		// Radio functions
 		uint8_t sendRadio(char * buff);
+		uint8_t sendPacketTimeout(uint8_t dest, char *payload, uint16_t length16);
+		uint8_t truncPayload(uint16_t length16);
+		uint8_t sendPacketTimeoutACK(uint8_t dest, char *payload, uint16_t length16, uint32_t wait);
+		uint8_t sendPacketTimeoutACKRetries(uint8_t dest, char *payload, uint16_t length16, uint32_t wait);
+		uint8_t setPacket(uint8_t dest, uint8_t *payload);
+		uint8_t getACK();
 		uint8_t receiveRadio(uint32_t timeout);
 		uint8_t receiveRadioACK(uint32_t timeout);
 		int8_t setNodeAddress(uint8_t addr);

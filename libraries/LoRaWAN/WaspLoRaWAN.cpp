@@ -3802,6 +3802,302 @@ uint8_t WaspLoRaWAN::sendRadio(char * message)
 	}
 }
 
+/*
+ Function: Configures the module to transmit information.
+ Returns: Integer that determines if there has been any error
+   state = 2  --> The command has not been executed
+   state = 1  --> There has been an error while executing the command
+   state = 0  --> The command has been executed with no errors
+*/
+uint8_t WaspLoRaWAN::sendPacketTimeout(	uint8_t dest,
+										char *payload,
+										uint16_t length16)
+{
+	uint8_t state = 2;
+	uint8_t state_f = 2;
+  uint8_t message[MAX_PAYLOAD];
+  char sendMessage[MAX_PAYLOAD];
+
+	state = truncPayload(length16);
+	if( state == 0 )
+	{
+    Utils.str2hex(payload, message, 4+length16);
+		state_f = setPacket(dest, message);	// Setting a packet with 'dest' destination
+    message[0] = packet_sent.dst;
+    message[1] = packet_sent.src;
+    message[2] = packet_sent.length;
+    message[3] = packet_sent.packnum;	// Setting packet number in packet structure
+    for(unsigned int i = 0; i < length16; i++)
+    {
+      message[i+4] = packet_sent.data[i];
+    }
+    message[4+length16] = packet_sent.retry;
+    Utils.hex2str(message, sendMessage, 4+length16);
+	}
+	else
+	{
+		state_f = state;
+	}
+	if( state_f == 0 )
+	{
+		state_f = sendRadio(sendMessage);	// Sending the packet
+	}
+	return state_f;
+}
+
+/*
+ Function: It truncs the payload length if it is greater than 0xFF.
+ Returns: Integer that determines if there has been any error
+   state = 1  --> There has been an error while executing the command
+   state = 0  --> The command has been executed with no errors
+*/
+uint8_t WaspLoRaWAN::truncPayload(uint16_t length16)
+{
+	uint8_t state = 1;
+	if( length16 > MAX_PAYLOAD )
+	{
+		_payloadlength = MAX_PAYLOAD;
+	}
+	else
+	{
+		_payloadlength = (length16 & 0xFF);
+	}
+	state = 0;
+	return state;
+}
+
+/*
+ Function: Configures the module to transmit information and receive an ACK.
+ Returns: Integer that determines if there has been any error
+   state = 9  --> The ACK lost (no data available)
+   state = 8  --> The ACK lost
+   state = 7  --> The ACK destination incorrectly received
+   state = 6  --> The ACK source incorrectly received
+   state = 5  --> The ACK number incorrectly received
+   state = 4  --> The ACK length incorrectly received
+   state = 3  --> N-ACK received
+   state = 2  --> The command has not been executed
+   state = 1  --> There has been an error while executing the command
+   state = 0  --> The command has been executed with no errors
+*/
+uint8_t WaspLoRaWAN::sendPacketTimeoutACK(	uint8_t dest,
+											char *payload,
+											uint16_t length16, uint32_t wait)
+{
+	uint8_t state = 2;
+	uint8_t state_f = 2;
+
+	#if (RN2483_debug_mode > 0)
+		USB.println();
+		USB.println(F("Starting 'sendPacketTimeoutACK'"));
+	#endif
+
+	state = sendPacketTimeout(dest, payload, length16);	// Sending packet to 'dest' destination
+	if( state == 0 )
+	{
+		state = receiveRadio(wait);	// Setting Rx mode to wait an ACK
+	}
+	else
+	{
+		state_f = 1;
+	}
+	if( state == 0 )
+	{
+		if(_length != 0)
+		{
+			state_f = getACK();	// Getting ACK
+		}
+		else
+		{
+			state_f = 9;
+		}
+	}
+	else
+	{
+		state_f = 1;
+	}
+	return state_f;
+}
+
+/*
+ Function: Configures the module to transmit information with retries in case of error.
+ Returns: Integer that determines if there has been any error
+   state = 9  --> The ACK lost (no data available)
+   state = 8  --> The ACK lost
+   state = 7  --> The ACK destination incorrectly received
+   state = 6  --> The ACK source incorrectly received
+   state = 5  --> The ACK number incorrectly received
+   state = 4  --> The ACK length incorrectly received
+   state = 3  --> N-ACK received
+   state = 2  --> The command has not been executed
+   state = 1  --> There has been an error while executing the command
+   state = 0  --> The command has been executed with no errors
+*/
+uint8_t WaspLoRaWAN::sendPacketTimeoutACKRetries(uint8_t dest, char *payload, uint16_t length16, uint32_t wait)
+{
+	uint8_t state = 2;
+	// Sending packet to 'dest' destination and waiting an ACK response.
+	state = 1;
+	while( (state != 0) && (_retries <= _maxRetries) )
+	{
+		state = sendPacketTimeoutACK(dest, payload, length16, wait);
+		_retries++;
+	}
+	_retries = 0;
+
+	return state;
+}
+
+/*
+ Function: It sets a packet struct in order to send it.
+ Returns:  Integer that determines if there has been any error
+   state = 2  --> The command has not been executed
+   state = 1  --> There has been an error while executing the command
+   state = 0  --> The command has been executed with no errors
+*/
+uint8_t WaspLoRaWAN::setPacket(uint8_t dest, uint8_t *payload)
+{
+	int8_t state = 2;
+  uint16_t length16;
+
+	// Updating incorrect value
+	_reception = CORRECT_PACKET;
+
+	if (_retries == 0)
+	{
+		// Updating these values only if it is the first try
+		// Setting destination in packet structure
+    _destination = dest; // Storing destination in a global variable
+  	packet_sent.dst = dest;	 // Setting destination in packet structure
+  	packet_sent.src = _nodeAddress; // Setting source in packet structure
+  	packet_sent.packnum = _packetNumber;	// Setting packet number in packet structure
+  	_packetNumber++;
+    length16 = (uint16_t)strlen((char*)payload);
+  	state = truncPayload(length16);
+  	if( state == 0 )
+  	{
+  		// fill data field until the end of the string
+  		for(unsigned int i = 0; i < _payloadlength; i++)
+  		{
+  			packet_sent.data[i] = payload[i];
+  		}
+      packet_sent.length = length16;
+  	}
+  	else
+  	{
+  		state = 1;
+  	}
+	}
+	else
+	{
+		packet_sent.retry = _retries;
+	}
+	return state;
+}
+
+/*
+ Function: It gets and stores an ACK if it is received, before ending 'wait' time.
+ Returns: Integer that determines if there has been any error
+   state = 7  --> The ACK destination incorrectly received
+   state = 6  --> The ACK source incorrectly received
+   state = 5  --> The ACK number incorrectly received
+   state = 4  --> The ACK length incorrectly received
+   state = 3  --> N-ACK received
+   state = 0  --> The ACK has been received with no errors
+*/
+uint8_t WaspLoRaWAN::getACK()
+{
+  uint8_t state = 2;
+  uint8_t receiveMessage[251];
+
+  #if (RN2483_debug_mode > 1)
+  USB.println();
+  USB.println(F("Starting 'getACK'"));
+  #endif
+  Utils.str2hex((char*)_buffer, receiveMessage, sizeof(receiveMessage));
+  // Storing the received ACK
+  ACK.dst = receiveMessage[0];
+  ACK.src = receiveMessage[1];
+  ACK.length = receiveMessage[2];
+  ACK.packnum = receiveMessage[3];
+  ACK.data[0] = receiveMessage[4];
+  _destination = ACK.dst;
+
+  // Checking the received ACK
+  if( ACK.dst == packet_sent.src )
+  {
+    if( ACK.src == packet_sent.dst )
+    {
+      if( ACK.packnum == packet_sent.packnum )
+      {
+        if( ACK.length == 0 )
+        {
+          if( ACK.data[0] == CORRECT_PACKET )
+          {
+            state = 0;
+            #if (RN2483_debug_mode > 0)
+            // Printing the received ACK
+            USB.println(F("## ACK received:"));
+            USB.printHex(ACK.dst);
+            USB.print("|");
+            USB.printHex(ACK.src);
+            USB.print("|");
+            USB.printHex(ACK.packnum);
+            USB.print("|");
+            USB.printHex(ACK.length);
+            USB.print("|");
+            USB.printHex(ACK.data[0]);
+            USB.println(F(" ##"));
+            USB.println();
+            #endif
+          }
+          else
+          {
+            state = 3;
+            #if (RN2483_debug_mode > 0)
+            USB.println(F("** N-ACK received **"));
+            USB.println();
+            #endif
+          }
+        }
+        else
+        {
+          state = 4;
+          #if (RN2483_debug_mode > 0)
+          USB.println(F("** ACK length incorrectly received **"));
+          USB.println();
+          #endif
+        }
+      }
+      else
+      {
+        state = 5;
+        #if (RN2483_debug_mode > 0)
+        USB.println(F("** ACK number incorrectly received **"));
+        USB.println();
+        #endif
+      }
+    }
+    else
+    {
+      state = 6;
+      #if (RN2483_debug_mode > 0)
+      USB.println(F("** ACK source incorrectly received **"));
+      USB.println();
+      #endif
+    }
+  }
+  else
+  {
+    state = 7;
+    #if (RN2483_debug_mode > 0)
+    USB.println(F("** ACK destination incorrectly received **"));
+    USB.println();
+    #endif
+  }
+  return state;
+}
+
 
 
 /*!
@@ -3898,7 +4194,8 @@ uint8_t WaspLoRaWAN::receiveRadio(uint32_t timeout)
    char ans1[15];
    char ans2[15];
    char ans3[15];
-   char message[ACK_LENGTH];
+   uint8_t receiveMessage[MAX_PAYLOAD];
+   uint8_t message[ACK_LENGTH];
 
    //set watch dog radio to timeout
    error = setRadioWDT(timeout);
@@ -3943,17 +4240,32 @@ uint8_t WaspLoRaWAN::receiveRadio(uint32_t timeout)
          _buffer[_length-2] = 0x00;
          _length -= 2;
 
-         _destination = _buffer[0];
+         Utils.str2hex((char*)_buffer, receiveMessage, sizeof(receiveMessage));
+
+         packet_received.dst = receiveMessage[0];
+         packet_received.src = receiveMessage[1];
+         packet_received.length = receiveMessage[2];
+         packet_received.packnum = receiveMessage[3];
+         for(unsigned int i = 0; i < packet_received.length; i++)
+         {
+           packet_received.data[i] = receiveMessage[i+4];
+         }
+         // Store 'retry'
+         packet_received.retry = receiveMessage[packet_received.length+4];
+
+         _destination = packet_received.dst;
          #if (RN2483_debug_mode > 0)
          USB.println(F("## Checking destination ##"));
          #endif
-         if( (_destination != _nodeAddress) || (_destination != BROADCAST_0) )
+
+         if( (_destination != _nodeAddress) )/*|| (_destination != BROADCAST_0) )*/
          {
            #if (RN2483_debug_mode > 0)
            USB.println(F("## Packet received is not for me ##"));
+           USB.println(_destination, HEX);
            USB.println(millis());
            #endif
-           return 15;
+           return LORAWAN_ANSWER_ERROR;
          }
          _reception = CORRECT_PACKET;
          #if (RN2483_debug_mode > 0)
@@ -3969,12 +4281,14 @@ uint8_t WaspLoRaWAN::receiveRadio(uint32_t timeout)
          {
            message[0] = ACK.dst;
            message[1] = ACK.src;
-           message[2] = ACK.packnum;
-           message[3] = ACK.length;
+           message[2] = ACK.length;
+           message[3] = ACK.packnum;
            message[4] = ACK.data[0];
 
+           Utils.hex2str(message, sendACKMessage, sizeof(sendACKMessage));
+
            #if (RN2483_debug_mode > 0)
-           USB.println(F("## ACK set and written in FIFO ##"));
+           USB.println(F("## ACK set ##"));
            // Print the complete ACK if debug_mode
            USB.println(F("## ACK to send:"));
            USB.printHex(ACK.dst);			 	// Printing destination
@@ -3991,16 +4305,16 @@ uint8_t WaspLoRaWAN::receiveRadio(uint32_t timeout)
            #endif
            #if (RN2483_debug_mode > 0)
            USB.println();
-           USB.println(F("Starting 'sendWithTimeout'"));
+           USB.println(F("Starting 'sendRadio'"));
            #endif
-           state = sendRadio(message);
+           state = sendRadio(sendACKMessage);
            if( state == LORAWAN_ANSWER_OK )
            {
              #if (RN2483_debug_mode > 0)
              USB.println(F("## Packet successfully sent ##"));
              USB.println();
              #endif
-             return 11;
+             return LORAWAN_ANSWER_OK;
            }
            else
            {
@@ -4008,10 +4322,10 @@ uint8_t WaspLoRaWAN::receiveRadio(uint32_t timeout)
              USB.println(F("** There has been an error and packet has not been sent **"));
              USB.println();
              #endif
-             return 12; // There has been an error with the 'sendWithTimeout' function
+             return state; // There has been an error with the 'sendWithTimeout' function
            }
          }
-         return 10;
+         return LORAWAN_ANSWER_ERROR;
        }
        return LORAWAN_NO_ANSWER;
      }
@@ -4026,7 +4340,6 @@ uint8_t WaspLoRaWAN::receiveRadio(uint32_t timeout)
  /*
  Function: Sets the node address in the module.
  Returns: Integer that determines if there has been any error
-   state = 2  --> The command has not been executed
    state = 1  --> There has been an error while executing the command
    state = 0  --> The command has been executed with no errors
    state = -1 --> Forbidden command for this protocol
@@ -4035,8 +4348,6 @@ uint8_t WaspLoRaWAN::receiveRadio(uint32_t timeout)
 */
 int8_t WaspLoRaWAN::setNodeAddress(uint8_t addr)
 {
-	byte st0;
-	byte value;
 	uint8_t state = 2;
 
 	#if (RN2483_debug_mode > 0)
@@ -4048,7 +4359,7 @@ int8_t WaspLoRaWAN::setNodeAddress(uint8_t addr)
 	if( addr > 255 )
 	{
 		state = -1;
-		#if (RN2483_debug_mode > 1)
+		#if (RN2483_debug_mode > 0)
 			USB.println(F("** Node address must be less than 255 **"));
 			USB.println();
 		#endif
@@ -4068,25 +4379,19 @@ int8_t WaspLoRaWAN::setNodeAddress(uint8_t addr)
 }
 
 /*
- Function: It sets an ACK in FIFO in order to send it.
+ Function: It sets an ACK in order to send it.
  Returns: Integer that determines if there has been any error
-   state = 2  --> The command has not been executed
-   state = 1  --> There has been an error while executing the command
    state = 0  --> The command has been executed with no errors
 */
 uint8_t WaspLoRaWAN::setACK()
 {
   uint8_t state = 2;
-
-  // Setting ACK length in order to send it
-//packet_sent.length = ACK_LENGTH;
-
   // Setting ACK
   memset( &ACK, 0x00, sizeof(ACK) );
   ACK.dst = packet_received.src; // ACK destination is packet source
   ACK.src = packet_received.dst; // ACK source is packet destination
-  ACK.packnum = packet_received.packnum; // packet number that has been correctly received
   ACK.length = 0;		  // length = 0 to show that's an ACK
+  ACK.packnum = packet_received.packnum; // packet number that has been correctly received
   ACK.data[0] = _reception;	// CRC of the received packet
 
   state = 0;
