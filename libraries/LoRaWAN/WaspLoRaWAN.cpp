@@ -288,29 +288,33 @@ const char* const table_LoRaWAN_ANSWERS[] PROGMEM=
  * 	@arg	'1' if error
  * 	@arg	'2' if no answer
  */
-uint8_t WaspLoRaWAN::ON(uint8_t socket)
-{
-	uint8_t error;
-	_baudrate = 57600;
-	_uart = socket;
+ uint8_t WaspLoRaWAN::ON(uint8_t socket)
+ {
+   uint8_t error;
+   _baudrate = 57600;
+   _uart = socket;
 
-	OFF(socket);
-	delay(200);
+   OFF(socket);
+   delay(200);
 
-	// select multiplexer
-    if (_uart == SOCKET0) 	Utils.setMuxSocket0();
-    if (_uart == SOCKET1) 	Utils.setMuxSocket1();
+   // select multiplexer
+   if (_uart == SOCKET0) 	Utils.setMuxSocket0();
+   if (_uart == SOCKET1) 	Utils.setMuxSocket1();
 
-	// Open UART
-	beginUART();
+   // Open UART
+   beginUART();
 
-    // power on the socket
-    PWR.powerSocket(_uart, HIGH);
+   // power on the socket
+   PWR.powerSocket(_uart, HIGH);
 
-	delay(300);
-	error = check();
-	return error;
-}
+   _retries = 0;
+   _maxRetries = 3;
+   _packetNumber = 0;
+
+   delay(300);
+   error = check();
+   return error;
+ }
 
 /*!
  * @brief	This function powers down the module
@@ -354,6 +358,10 @@ uint8_t WaspLoRaWAN::reset()
 	uint8_t status;
 	char ans1[15];
 	char ans2[15];
+
+  _retries = 0;
+  _maxRetries = 3;
+  _packetNumber = 0;
 
 	memset(_command,0x00,sizeof(_command));
 	memset(ans1,0x00,sizeof(ans1));
@@ -4238,6 +4246,8 @@ uint8_t WaspLoRaWAN::receiveRadio(uint32_t timeout)
          _length -= 2;
 
          Utils.str2hex((char*)_buffer, receiveMessage, sizeof(receiveMessage));
+
+         memset(packet_received.data,0x00,sizeof(packet_received.data));
 
          packet_received.dst = receiveMessage[0];
          packet_received.src = receiveMessage[1];
